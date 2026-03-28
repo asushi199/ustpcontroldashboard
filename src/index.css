@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 20%, #111a2e 0%, #060b14 45%, #03060d 100%);
+  color: #e8f1ff;
+}
+
+/* USTP PPD Manjung — watermark latar (App.jsx) */
+.ustp-watermark-glow-dark {
+  filter: drop-shadow(0 0 28px rgba(168, 85, 247, 0.55))
+    drop-shadow(0 0 52px rgba(34, 211, 238, 0.4))
+    drop-shadow(0 0 96px rgba(34, 211, 238, 0.18));
+}
+
+.ustp-watermark-glow-neon {
+  filter: drop-shadow(0 0 22px rgba(0, 229, 255, 0.65))
+    drop-shadow(0 0 48px rgba(168, 85, 247, 0.5))
+    drop-shadow(0 0 90px rgba(0, 229, 255, 0.22));
+}
+
+.ustp-watermark-day {
+  filter: drop-shadow(0 12px 40px rgba(15, 23, 42, 0.12));
+}
