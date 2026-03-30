@@ -771,6 +771,12 @@ const INTEGRASI_LAPORAN_CARDS = [
       "https://drive.google.com/file/d/15nLg2S1yoXCnCpQ6REDrM_qsij4282fP/view?usp=drive_link",
   },
   {
+    title: "Khidmat bantu dron",
+    viewUrl:
+      "https://docs.google.com/document/d/1euIyXy0yb2wqE3_QwLRwAlOTnuVdAz2Vbo1HbK7Bw9A/edit?tab=t.0",
+    kind: "gdoc",
+  },
+  {
     title: "Pencetak 3D",
     viewUrl:
       "https://drive.google.com/file/d/11w7hSfjDNVr2v8NtRbXYfTc-QNiJ6PTK/view?usp=drive_link",
@@ -2703,14 +2709,14 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Laporan</p>
                         <p className="text-xs text-slate-400">
-                          Canva grafik &amp; poster · Dron · Pencetak 3D · Reka bentuk 3D
-                          (PDF Drive)
+                          Canva grafik &amp; poster · Dron (PDF) · Khidmat bantu dron (Google
+                          Docs) · Pencetak 3D · Reka bentuk 3D (PDF Drive)
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
-                        {INTEGRASI_LAPORAN_CARDS.map(({ title, viewUrl }) => (
+                        {INTEGRASI_LAPORAN_CARDS.map(({ title, viewUrl, kind }) => (
                           <article
                             key={title}
                             className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
@@ -2721,7 +2727,9 @@ export default function App() {
                                   {title}
                                 </h3>
                                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                                  PDF (Google Drive)
+                                  {kind === "gdoc"
+                                    ? "LAPORAN SPb 8/6/2025 — Google Docs"
+                                    : "PDF (Google Drive)"}
                                 </p>
                               </div>
                               <a
@@ -2736,8 +2744,16 @@ export default function App() {
                             <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
                               <iframe
                                 loading="lazy"
-                                title={`${title} — PDF`}
-                                src={driveGoogleFilePreviewUrl(viewUrl)}
+                                title={
+                                  kind === "gdoc"
+                                    ? `${title} — Google Docs`
+                                    : `${title} — PDF`
+                                }
+                                src={
+                                  kind === "gdoc"
+                                    ? googleDocEmbedPreviewUrl(viewUrl)
+                                    : driveGoogleFilePreviewUrl(viewUrl)
+                                }
                                 width="100%"
                                 height="100%"
                                 style={{ border: 0, background: "#0b1220" }}
