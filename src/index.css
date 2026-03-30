@@ -12,6 +12,33 @@ body {
   color: #e8f1ff;
 }
 
+/* Sticky <summary> — <details> must not use overflow:hidden (clip breaks sticky). */
+#root details > summary {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-radius: 1rem 1rem 0 0;
+  background-color: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(34, 211, 238, 0.1);
+}
+
+/*
+ * Subtopik (nested <details>): offset so the bar sits under the parent section’s
+ * sticky title — e.g. ITM open + Laman web open, two rows don’t stack at top: 0.
+ * ~4.25rem ≈ py-3.5 + h-9 icon + two text lines (App.jsx summaries).
+ */
+#root details details > summary {
+  top: 4.25rem;
+  z-index: 41;
+}
+
+#root details details details > summary {
+  top: calc(4.25rem * 2);
+  z-index: 42;
+}
+
 /* USTP PPD Manjung — watermark latar (App.jsx) */
 .ustp-watermark-glow-dark {
   filter: drop-shadow(0 0 28px rgba(168, 85, 247, 0.55))

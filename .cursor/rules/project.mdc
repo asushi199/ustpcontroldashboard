@@ -16,6 +16,12 @@ alwaysApply: true
 - 保持与现有代码风格一致（导入、组件写法、Tailwind 类名）；不做无关重构。
 - 不要提交或写入真实密钥；敏感配置用环境变量，示例用占位符。
 
+## 页面布局：资源类卡片「一排两个」
+- **规则**：在 OSC 主流程中，凡以 **卡片 / kad / iframe 预览 / pautan** 平铺展示的资源网格（含 Bahan Sokongan 各子项、Integrasi Teknologi Pendidikan、Penyebaran dasar、弹窗内同类摘要卡等），在 `sm` 断点及以上 **每行固定两列**，禁止再升到三列（例如不要用 `lg:grid-cols-3`）。
+- **Tailwind 推荐写法**：`grid grid-cols-1 gap-3 sm:grid-cols-2`（间距可按区块用 `gap-3` / `gap-4`）。
+- **例外**（可不套用两列）：窄条 **表单控件横排**（如 Program Ains 弹窗里 search + 两个 select 的一行三格）、**数据表**、以及 **仪表大块文章**（如 `xl:grid-cols-4` 的 Maklumat Asas 顶栏）等非「资源平铺卡」布局；新增 **bahan / embed / pautan** 时默认仍跟两列规则。
+- **大图 / PDF 预览**：与占位卡、链接卡放在 **同一两列网格** 内，不要单独占满宽一行后再接三列网格；预览高度用适中 `min()` / `vh`，避免单卡过高。
+
 ## 修改范围
 - 只改完成任务所需的文件；不擅自改 node_modules、构建产物，以及用户未要求动的本地数据文件（如 data/、*.sqlite 等）。
 
