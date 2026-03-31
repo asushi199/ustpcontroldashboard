@@ -621,6 +621,41 @@ const PENYEBARAN_DASAR_CANVA_CARDS = [
   },
 ];
 
+/** Penyebaran dasar — pameran PDF (Google Drive) */
+const PENYEBARAN_DASAR_DRIVE_PDF_CARDS = [
+  {
+    key: "pameran-hari-guru-kebangsaan-2025",
+    title: "Pameran Gerakan Massa Hari Guru Kebangsaan 2025",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1oUjyXVFSqfwhOrrr6G-GWDYVctVAtbwg/view?usp=drive_link",
+  },
+  {
+    key: "pameran-coe-readigital-negeri-perak",
+    title:
+      "Pameran Peralatan COE Sempena Karnival R.E.A.Digital Peringkat Negeri Perak",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1H6kg2qwmdsN3u8ufDa9LQwtf736ecqvO/view?usp=drive_link",
+  },
+  {
+    key: "pameran-townhall-zon-tengah-ipoh-2025",
+    title:
+      "Pameran Sempena Townhall Pemantapan Pendidikan Digital Pegawai Perkhidmatan Pendidikan Kementerian Pendidikan Malaysia Zon Tengah (Ipoh) Tahun 2025",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1aKAwx6lSLTPD3BdH6gKtuLZ7zhxiH43c/view?usp=drive_link",
+  },
+  {
+    key: "contoh-penyebaran-dasar-kpm-hebahan-coe",
+    title:
+      "Contoh penyebaran dasar KPM melalui hebahan peralatan COE yang terkini",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/14PqERSatwgbK30vbSfiRjfXUlFZItWpL/view?usp=drive_link",
+  },
+];
+
 function canvaViewEmbedUrl(viewUrl) {
   return viewUrl.includes("?") ? `${viewUrl}&embed` : `${viewUrl}?embed`;
 }
@@ -672,10 +707,6 @@ const SURAT_PUNCA_KUASA_CARDS = [
   },
 ];
 
-const ANALISIS_PENARAFAN_KENDIRI_URL =
-  "https://sites.google.com/moe-dl.edu.my/perakdrift/kluster/pendigitalan/instrumen-pendigitalan/analisis-penarafan-kendiri";
-const OPPR_PENDIDIKAN_PERAK_URL =
-  "https://sites.google.com/moe-dl.edu.my/perakdrift/kluster/pendigitalan/instrumen-pendigitalan/oppr-pendigitalan-perak?authuser=0";
 const PENCAPAIAN_USTP_2025_URL =
   "https://www.canva.com/design/DAGxVjtQuhg/FTA-gZELFpsmrLn3HyhRnQ/view";
 const PENCAPAIAN_USTP_2025_EMBED = `${PENCAPAIAN_USTP_2025_URL}?embed`;
@@ -736,7 +767,11 @@ const SUCCESS_STORY_USTP_URL =
   "https://www.canva.com/design/DAGl_Rzw6so/PWBQvkwQprFOIQ12LZ1TZQ/view";
 const SUCCESS_STORY_USTP_EMBED = `${SUCCESS_STORY_USTP_URL}?embed`;
 const MAJLIS_APRESIASI_DIGITAL_URL =
-  "https://www.canva.com/design/DAG3I0mucKY/ehUSnXhpz06UxXWmTN8-wA/edit?utm_content=DAG3I0mucKY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton";
+  "https://www.canva.com/design/DAG3I0mucKY/ehUSnXhpz06UxXWmTN8-wA/view";
+const MAJLIS_APRESIASI_DIGITAL_EMBED = canvaViewEmbedUrl(MAJLIS_APRESIASI_DIGITAL_URL);
+const SLAID_MAJLIS_APRESIASI_URL =
+  "https://www.canva.com/design/DAG5B4DtRe8/nE9Trwg7IRWEFamAGjyRMQ/view";
+const SLAID_MAJLIS_APRESIASI_EMBED = canvaViewEmbedUrl(SLAID_MAJLIS_APRESIASI_URL);
 const KERTAS_KERJA_EDUSPARK_COE_ROADSHOW_URL =
   "https://www.canva.com/design/DAG0hWYthb4/bzP48XBfMSZMxXUqsL_g3g/view";
 /** Kertas kerja program — Bengkel Digital 2025 (PDF, Google Drive) */
@@ -747,19 +782,15 @@ const JNJ_PANDAI_EDUCATION_DOC_URL =
   "https://docs.google.com/document/d/1Fri298_f1FPov0K3YLfFZdVaauCSSkKoe7f2BKLt4bQ/edit?tab=t.0";
 const JNJ_GOOLEE_MUSTREAD_PDF_URL =
   "https://drive.google.com/file/d/1FMmqWJNRU0qHmvV84MpZ5poQRAuCPnUe/view?usp=drive_link";
+/** Integrasi — JNJ Minecraft (PDF, Google Drive) */
+const JNJ_MINECRAFT_PDF_URL =
+  "https://drive.google.com/file/d/1ZzDIs8yhHwzhKktP5CpdkGGmqEkFW1zp/view?usp=drive_link";
+/** Integrasi — JNJ Mikrobotik & Edu Kit (PDF, Google Drive) */
+const JNJ_MIKROBOTIK_EDUKIT_PDF_URL =
+  "https://drive.google.com/file/d/1rzOHBhXG81YtpdwQzvg6i-bXhf47DK9E/view?usp=drive_link";
 
 /** Integrasi Teknologi Pendidikan — Laporan (PDF Google Drive) */
 const INTEGRASI_LAPORAN_CARDS = [
-  {
-    title: "Canva Grafik Fasa 1",
-    viewUrl:
-      "https://drive.google.com/file/d/1cHQpv3ddBx-RLfvOCDn71_VGaLy15aDW/view?usp=drive_link",
-  },
-  {
-    title: "Canva Grafik Fasa 2",
-    viewUrl:
-      "https://drive.google.com/file/d/1vnq-bV0QSfGzdCyOxB2ZbahycHeV5mKK/view?usp=drive_link",
-  },
   {
     title: "Canva Poster",
     viewUrl:
@@ -786,7 +817,66 @@ const INTEGRASI_LAPORAN_CARDS = [
     viewUrl:
       "https://drive.google.com/file/d/1sXYW-8zGpgqJz4-Y7eGTGgPHtKljC-fy/view?usp=drive_link",
   },
+  {
+    title: "OPR Bengkel MYRC",
+    viewUrl:
+      "https://drive.google.com/file/d/1fxIy4U61VSvmDBkLuUhMf57pJfPA8RVQ/view?usp=drive_link",
+  },
+  {
+    title: "OPR Bengkel Laman Web",
+    viewUrl:
+      "https://drive.google.com/file/d/18HWD-H5jS_o8klAr6ospW7-pottj3QJI/view?usp=drive_link",
+  },
+  {
+    title:
+      "OPR Bengkel Penggunaan Mikrobotik & Edu Kit (COE USTP & JU RBT Daerah)",
+    viewUrl:
+      "https://drive.google.com/file/d/1HLCjQTSwIJMD2-q6nrRRPhfwFFn-AWsk/view?usp=drive_link",
+  },
 ];
+
+/** Integrasi — JNJ: laporan PDF tambahan (kolaborasi / Ana Muslim, dll.) */
+const INTEGRASI_JNJ_DRIVE_PDF_CARDS = [
+  {
+    title: "JNJ Manjung & Padang Terap",
+    blurb: "Bersama USTP PPD Padang Terap · SK Bandar Baru Jitra — PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1Kig1xzkFNG-8HVGVrTQoxuhJdYPu-3Zy/view?usp=drive_link",
+  },
+  {
+    title: "JNJ Ana Muslim Seri Selamat",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/14S77Zsupr7CayN4rPzSyHAklE6LEwd8i/view?usp=drive_link",
+  },
+  {
+    title: "JNJ Ana Muslim SG Tiram",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/11fojvC7hJDlNSlPC1isFmStYlR2ZlOjw/view?usp=drive_link",
+  },
+];
+
+/** Integrasi — JNJ: JNJ YTY (Canva Grafik per fasa, PDF Google Drive) */
+const INTEGRASI_JNJ_YTY_PDF_CARDS = [
+  {
+    viewUrl:
+      "https://drive.google.com/file/d/1cHQpv3ddBx-RLfvOCDn71_VGaLy15aDW/view?usp=drive_link",
+    blurb: "Canva Grafik Fasa 1 — PDF (Google Drive)",
+  },
+  {
+    viewUrl:
+      "https://drive.google.com/file/d/1vnq-bV0QSfGzdCyOxB2ZbahycHeV5mKK/view?usp=drive_link",
+    blurb: "Canva Grafik Fasa 2 — PDF (Google Drive)",
+  },
+];
+
+/** Hebahan Pendidikan Digital — COE kepada komuniti (imej dalam public/) */
+const HEBAHAN_HARI_TERBUKA_PPD_MANJUNG_IMG = `${import.meta.env.BASE_URL}hebahan-hari-terbuka-ppd-manjung.png`;
+const HEBAHAN_HARI_TERBUKA_PAMERAN_USTP_IMG = `${import.meta.env.BASE_URL}hebahan-hari-terbuka-pameran-ustp.png`;
+const HEBAHAN_KARNIVAL_DIGITAL_MANJUNG_IMG = `${import.meta.env.BASE_URL}hebahan-karnival-digital-ppd-manjung.png`;
+const HEBAHAN_KARNIVAL_DIGITAL_PANGKOR_IMG = `${import.meta.env.BASE_URL}hebahan-karnival-digital-pulau-pangkor.png`;
+const HEBAHAN_PAMERAN_COE_NEGERI_IMG = `${import.meta.env.BASE_URL}hebahan-pameran-coe-negeri-perak.png`;
 
 /** Inisiatif Teknologi Maklumat — Google Classroom & JNJ (Docs) */
 const GOOGLE_CLASSROOM_USTP_MANJUNG_URL = "https://classroom.google.com/u/0/h";
@@ -798,6 +888,10 @@ const ITM_JNJ_IAB_DOC_URL =
 /** ITM — JNJ NADI (PDF, Google Drive) */
 const ITM_JNJ_NADI_PDF_URL =
   "https://drive.google.com/file/d/1OIh9uBmlUZN5AvfVV25HcUjsSAfEX-Y3/view?usp=drive_link";
+/** ITM — Impak JNJ (imej ringkasan dalam public/) */
+const ITM_IMPAK_JNJ_MYRC_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-myrc.jpg`;
+const ITM_IMPAK_JNJ_MINECRAFT_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-minecraft.jpg`;
+const ITM_IMPAK_JNJ_PANDAI_APP_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-pandai-app.jpg`;
 
 /** Pembudayaan Amalan Membaca — JNJ Blink Book (RAK MAYA) */
 const PEMBUDAYAAN_JNJ_BLINK_BOOK_PSS_MAYA_URL = "https://sesdamaya.rakmaya.com/";
@@ -2258,7 +2352,10 @@ export default function App() {
           </details>
         </section>
 
-        <section aria-label="OSC — analisis hingga bahan sokongan" className="space-y-3">
+        <section
+          aria-label="OSC — analisis, integrasi, hebahan digital COE, program pemerkasaan bacaan dan bahan sokongan"
+          className="space-y-3"
+        >
               <details className="group rounded-2xl border border-cyan-400/20 bg-slate-900/28 backdrop-blur-2xl open:border-cyan-400/40">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/35 bg-indigo-500/10 text-indigo-200">
@@ -2282,33 +2379,56 @@ export default function App() {
                       Analisis Data
                     </p>
                     <p className="text-xs text-slate-400">
-                      DCS · AINS · DELIMa · Pensijilan · AI Tools (OPTIK 2)
+                      Subtopik: Data DELIMa · Status DCS · Program Ains · Pensijilan Digital · AI
+                      Tools (OPTIK 2)
                     </p>
                   </div>
                 </summary>
-                <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/15 p-4">
-                  <p className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Data & analisis utama
-                  </p>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <article
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        if (e.target.closest("a,button")) return;
-                        if (!delimaLoading && !delimaError && delimaRows.length > 0) {
-                          setDelimaModalOpen(true);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== "Enter" && e.key !== " ") return;
-                        e.preventDefault();
-                        if (!delimaLoading && !delimaError && delimaRows.length > 0) {
-                          setDelimaModalOpen(true);
-                        }
-                      }}
-                      className="flex min-h-[520px] cursor-pointer flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl transition hover:border-cyan-400/45 hover:shadow-[0_0_28px_rgba(0,229,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
-                    >
+                <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Data DELIMa</p>
+                        <p className="text-xs text-slate-400">
+                          Ringkasan penggunaan DELIMa · klik kad untuk paparan penuh
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <article
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          if (e.target.closest("a,button")) return;
+                          if (!delimaLoading && !delimaError && delimaRows.length > 0) {
+                            setDelimaModalOpen(true);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter" && e.key !== " ") return;
+                          e.preventDefault();
+                          if (!delimaLoading && !delimaError && delimaRows.length > 0) {
+                            setDelimaModalOpen(true);
+                          }
+                        }}
+                        className="flex min-h-[520px] cursor-pointer flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl transition hover:border-cyan-400/45 hover:shadow-[0_0_28px_rgba(0,229,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+                      >
                       <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <h2 className="text-xl font-semibold text-white">Data DELIMa</h2>
@@ -2427,7 +2547,35 @@ export default function App() {
                       >
                         Paparan penuh
                       </button>
-                    </article>
+                      </article>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Status DCS</p>
+                        <p className="text-xs text-slate-400">
+                          Carta KPI · TOV daerah · capaian berbanding sasaran kebangsaan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article
                       className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl"
                     >
@@ -2482,6 +2630,36 @@ export default function App() {
                         Klik untuk lihat gambar penuh
                       </button>
                     </article>
+                    <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/30 bg-indigo-500/10 text-indigo-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Program Ains</p>
+                        <p className="text-xs text-slate-400">
+                          Statistik kelulusan · carta mengikut jenis sekolah
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article
                       className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl"
                     >
@@ -2530,6 +2708,36 @@ export default function App() {
                         </button>
                       </div>
                     </article>
+                    <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10 text-emerald-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Analisis Pensijilan Digital</p>
+                        <p className="text-xs text-slate-400">
+                          Ringkasan lokasi, jenis sekolah dan penyedia
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article
                       className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl"
                     >
@@ -2548,7 +2756,36 @@ export default function App() {
                         Klik untuk lihat gambar penuh
                       </button>
                     </article>
+                    <DetailsCollapseFooter />
+                    </div>
+                  </details>
 
+                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-400/30 bg-sky-500/10 text-sky-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">AI Tools dalam DELIMa</p>
+                        <p className="text-xs text-slate-400">
+                          Ringkasan OPTIK 2 berbanding KPI kebangsaan (55%)
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl">
                       <h2 className="text-xl font-semibold text-white">AI Tools dalam DELIMa</h2>
                       <p className="mt-2 text-sm text-slate-300">
@@ -2556,7 +2793,9 @@ export default function App() {
                       </p>
                       <AiToolsDelimaSummary />
                     </article>
-                  </div>
+                    <DetailsCollapseFooter />
+                    </div>
+                  </details>
                   <DetailsCollapseFooter />
                 </div>
 
@@ -2585,8 +2824,8 @@ export default function App() {
                       Integrasi Teknologi Pendidikan
                     </p>
                     <p className="text-xs text-slate-400">
-                      Subtopik: Kertas kerja · Laporan · JNJ (Pandai Education, Goolee
-                      &amp; Must Read)
+                      Subtopik: Kertas kerja · Laporan · JNJ (YTY, Pandai, Goolee, Minecraft,
+                      Mikrobotik &amp; Edu Kit, kolaborasi &amp; Ana Muslim)
                     </p>
                   </div>
                 </summary>
@@ -2709,8 +2948,9 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Laporan</p>
                         <p className="text-xs text-slate-400">
-                          Canva grafik &amp; poster · Dron (PDF) · Khidmat bantu dron (Google
-                          Docs) · Pencetak 3D · Reka bentuk 3D (PDF Drive)
+                          Canva poster · Dron (PDF) · Khidmat bantu dron (Google Docs) ·
+                          Pencetak 3D · Reka bentuk 3D · OPR Bengkel MYRC · OPR Bengkel Laman Web ·
+                          OPR Mikrobotik &amp; Edu Kit (COE / JU RBT) (PDF Drive)
                         </p>
                       </div>
                     </summary>
@@ -2789,12 +3029,50 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">JNJ</p>
                         <p className="text-xs text-slate-400">
-                          Pandai Education (Google Docs) · Goolee &amp; Must Read (PDF)
+                          YTY · Pandai · Goolee · Minecraft · Mikrobotik &amp; Edu Kit · Manjung
+                          &amp; Padang Terap · Ana Muslim (Seri Selamat, SG Tiram) — PDF / Docs
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
+                        {INTEGRASI_JNJ_YTY_PDF_CARDS.map(({ viewUrl, blurb }) => (
+                          <article
+                            key={viewUrl}
+                            className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
+                          >
+                            <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                              <div className="min-w-0 pr-1">
+                                <h3 className="text-sm font-semibold leading-snug text-white">
+                                  YTY
+                                </h3>
+                                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                  {blurb}
+                                </p>
+                              </div>
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                              >
+                                Buka Penuh
+                              </a>
+                            </div>
+                            <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                              <iframe
+                                loading="lazy"
+                                title={`JNJ YTY — ${blurb}`}
+                                src={driveGoogleFilePreviewUrl(viewUrl)}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0, background: "#0b1220" }}
+                                className="block h-full w-full"
+                                allowFullScreen
+                              />
+                            </div>
+                          </article>
+                        ))}
                         <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
                           <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
                             <div className="min-w-0 pr-1">
@@ -2859,8 +3137,357 @@ export default function App() {
                             />
                           </div>
                         </article>
+                        <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                JNJ Minecraft
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                MINECRAFT VALE — PDF (Google Drive)
+                              </p>
+                            </div>
+                            <a
+                              href={JNJ_MINECRAFT_PDF_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="JNJ Minecraft — MINECRAFT VALE PDF"
+                              src={driveGoogleFilePreviewUrl(JNJ_MINECRAFT_PDF_URL)}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                        <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                JNJ Mikrobotik &amp; Edukit
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                jnj reka edukit — PDF (Google Drive)
+                              </p>
+                            </div>
+                            <a
+                              href={JNJ_MIKROBOTIK_EDUKIT_PDF_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="JNJ Mikrobotik & Edukit — PDF"
+                              src={driveGoogleFilePreviewUrl(JNJ_MIKROBOTIK_EDUKIT_PDF_URL)}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                        {INTEGRASI_JNJ_DRIVE_PDF_CARDS.map(({ title, blurb, viewUrl }) => (
+                          <article
+                            key={viewUrl}
+                            className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
+                          >
+                            <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                              <div className="min-w-0 pr-1">
+                                <h3 className="text-sm font-semibold leading-snug text-white">
+                                  {title}
+                                </h3>
+                                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                  {blurb}
+                                </p>
+                              </div>
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                              >
+                                Buka Penuh
+                              </a>
+                            </div>
+                            <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                              <iframe
+                                loading="lazy"
+                                title={`${title} — PDF`}
+                                src={driveGoogleFilePreviewUrl(viewUrl)}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0, background: "#0b1220" }}
+                                className="block h-full w-full"
+                                allowFullScreen
+                              />
+                            </div>
+                          </article>
+                        ))}
                       </div>
                     <DetailsCollapseFooter />
+                    </div>
+                  </details>
+                  <DetailsCollapseFooter />
+                </div>
+              </details>
+
+              <details className="group rounded-2xl border border-cyan-400/20 bg-slate-900/28 backdrop-blur-2xl open:border-cyan-400/40">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-fuchsia-400/35 bg-fuchsia-500/10 text-fuchsia-200">
+                    <svg
+                      className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1c.256 0 .512.02.758.06C9.879 3.161 12.32 1 15 1c2.68 0 5.121 2.161 6.242 5.06.246-.04.502-.06.758-.06h1a4 4 0 013.424 6.868M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold leading-snug text-white">
+                      Hebahan Pendidikan Digital melalui Peralatan COE kepada Komuniti Sekolah
+                      dan Setempat
+                    </p>
+                    <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-300">
+                      (Orang Awam)
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+                      Subtopik: Hari terbuka PPD Manjung · Karnival Digital (Manjung &amp; Pulau
+                      Pangkor) · Pameran COE negeri &amp; kebangsaan
+                    </p>
+                  </div>
+                </summary>
+                <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Hari terbuka PPD Manjung</p>
+                        <p className="text-xs text-slate-400">Dua paparan gambar hebahan</p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-white">
+                              Hari Terbuka PPD Manjung
+                            </h3>
+                            <a
+                              href={HEBAHAN_HARI_TERBUKA_PPD_MANJUNG_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <div className="mt-1 max-h-[min(72vh,620px)] min-h-[200px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={HEBAHAN_HARI_TERBUKA_PPD_MANJUNG_IMG}
+                              alt="Hebahan — Hari Terbuka PPD Manjung"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-white">
+                              Pameran USTP (Hari Terbuka)
+                            </h3>
+                            <a
+                              href={HEBAHAN_HARI_TERBUKA_PAMERAN_USTP_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <div className="mt-1 max-h-[min(72vh,620px)] min-h-[200px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={HEBAHAN_HARI_TERBUKA_PAMERAN_USTP_IMG}
+                              alt="Hebahan — Hari Terbuka PPD Manjung, pameran USTP"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                      </div>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/10 text-violet-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">
+                          Karnival Digital Daerah Manjung dan Pulau Pangkor
+                        </p>
+                        <p className="text-xs text-slate-400">Manjung · Edisi Pulau Pangkor</p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-white">
+                              Karnival Digital COE PPD Manjung
+                            </h3>
+                            <a
+                              href={HEBAHAN_KARNIVAL_DIGITAL_MANJUNG_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <div className="mt-1 max-h-[min(72vh,620px)] min-h-[200px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={HEBAHAN_KARNIVAL_DIGITAL_MANJUNG_IMG}
+                              alt="Hebahan — Karnival Digital COE PPD Manjung"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-white">
+                              Karnival Digital — Edisi Pulau Pangkor
+                            </h3>
+                            <a
+                              href={HEBAHAN_KARNIVAL_DIGITAL_PANGKOR_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <div className="mt-1 max-h-[min(72vh,620px)] min-h-[200px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={HEBAHAN_KARNIVAL_DIGITAL_PANGKOR_IMG}
+                              alt="Hebahan — Karnival Digital COE PPD Manjung edisi Pulau Pangkor"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                      </div>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/35 bg-amber-500/10 text-amber-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">
+                          Pameran Peralatan COE Peringkat Negeri &amp; Kebangsaan
+                        </p>
+                        <p className="text-xs text-slate-400">Pameran peringkat negeri Perak</p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl lg:max-w-4xl">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold text-white">
+                            Pameran Peralatan COE Negeri Perak
+                          </h3>
+                          <a
+                            href={HEBAHAN_PAMERAN_COE_NEGERI_IMG}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                          >
+                            Buka gambar penuh
+                          </a>
+                        </div>
+                        <div className="mt-1 max-h-[min(72vh,620px)] min-h-[200px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                          <img
+                            src={HEBAHAN_PAMERAN_COE_NEGERI_IMG}
+                            alt="Hebahan — Pameran peralatan COE peringkat negeri Perak"
+                            className="w-full min-w-0 object-contain object-top"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      </article>
+                      <DetailsCollapseFooter />
                     </div>
                   </details>
                   <DetailsCollapseFooter />
@@ -2890,7 +3517,8 @@ export default function App() {
                       Inisiatif Teknologi Maklumat
                     </p>
                     <p className="text-xs text-slate-400">
-                      Subtopik: Google Classroom · JNJ (MAXIS, IAB, NADI) · Laman web sekolah
+                      Subtopik: Google Classroom · JNJ (MAXIS, IAB, NADI) · Impak JNJ · Laman web
+                      sekolah
                     </p>
                   </div>
                 </summary>
@@ -2959,7 +3587,7 @@ export default function App() {
                     </div>
                   </details>
 
-                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-200">
                         <svg
@@ -3078,6 +3706,123 @@ export default function App() {
                         </article>
                       </div>
                     <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-orange-400/35 bg-orange-500/10 text-orange-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Impak JNJ</p>
+                        <p className="text-xs text-slate-400">
+                          MYRC · Minecraft · Pandai Apps — ringkasan pencapaian &amp; susulan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ MYRC
+                            </h3>
+                            <a
+                              href={ITM_IMPAK_JNJ_MYRC_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            Top 3 kategori sekolah rendah dan sekolah menengah pada peringkat
+                            negeri; tempat kelima pada peringkat kebangsaan.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={ITM_IMPAK_JNJ_MYRC_IMG}
+                              alt="Impak JNJ MYRC — ringkasan pencapaian"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ Minecraft
+                            </h3>
+                            <a
+                              href={ITM_IMPAK_JNJ_MINECRAFT_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            Impak sekolah yang masuk bengkel: Raja Shariman, Methodist dan
+                            Dindings. Tahun 2026: 6 SR terpilih untuk program yang sama —
+                            jadual Mei 2026.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={ITM_IMPAK_JNJ_MINECRAFT_IMG}
+                              alt="Impak JNJ Minecraft — ringkasan sekolah & susulan 2026"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ Pandai Apps
+                            </h3>
+                            <a
+                              href={ITM_IMPAK_JNJ_PANDAI_APP_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            SK Seri Bayu Seri Manjung menang kategori murid peringkat
+                            kebangsaan.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={ITM_IMPAK_JNJ_PANDAI_APP_IMG}
+                              alt="Impak JNJ Pandai Apps — SK Seri Bayu Seri Manjung"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                      </div>
+                      <DetailsCollapseFooter />
                     </div>
                   </details>
 
@@ -3661,6 +4406,136 @@ export default function App() {
 
               <details className="group rounded-2xl border border-cyan-400/20 bg-slate-900/28 backdrop-blur-2xl open:border-cyan-400/40">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 text-emerald-200">
+                    <svg
+                      className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                      />
+                    </svg>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      Program Pemerkasaan Bacaan Murid
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Subtopik: Video kreatif · Bicara Buku · Pembaca Bestari
+                    </p>
+                  </div>
+                </summary>
+                <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Video kreatif</p>
+                        <p className="text-xs text-slate-400">
+                          Bahan video kreatif berkaitan pemerkasaan bacaan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <p className="text-sm text-slate-400">
+                        Ruangan Video kreatif — pautan atau embed akan ditambah apabila sedia.
+                      </p>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/25 bg-violet-500/10 text-violet-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Bicara Buku</p>
+                        <p className="text-xs text-slate-400">
+                          Sesi bicara buku &amp; bahan sokongan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <p className="text-sm text-slate-400">
+                        Ruangan Bicara Buku — kandungan akan dikemas kini.
+                      </p>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/35 bg-amber-500/10 text-amber-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.887a1 1 0 00-1.176 0l-3.976 2.887c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Pembaca Bestari</p>
+                        <p className="text-xs text-slate-400">
+                          Program &amp; bahan pembaca bestari
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <p className="text-sm text-slate-400">
+                        Ruangan Pembaca Bestari — kandungan akan dikemas kini.
+                      </p>
+                      <DetailsCollapseFooter />
+                    </div>
+                  </details>
+                  <DetailsCollapseFooter />
+                </div>
+              </details>
+
+              <details className="group rounded-2xl border border-cyan-400/20 bg-slate-900/28 backdrop-blur-2xl open:border-cyan-400/40">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/12 text-cyan-200">
                     <svg
                       className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
@@ -3681,7 +4556,7 @@ export default function App() {
                     <p className="text-sm font-semibold text-white">Bahan Sokongan</p>
                     <p className="text-xs text-slate-400">
                       Buku pengurusan, pelaporan, pencapaian, surat, penyebaran dasar
-                      (MJ3PD/JKPA), bahan PDP digital, bahan rujukan
+                      (MJ3PD/JKPA), bahan PDP digital
                     </p>
                   </div>
                 </summary>
@@ -3882,12 +4757,67 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Pencapaian</p>
                         <p className="text-xs text-slate-400">
+                          Kertas kerja Majlis Apresiasi Digital · Slaid Majlis Apresiasi (Canva) ·
                           Pencapaian USTP 2025 · kad penghargaan · success story (Canva)
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-base font-semibold text-white">
+                              Kertas Kerja Majlis Apresiasi Digital
+                            </h3>
+                            <a
+                              href={MAJLIS_APRESIASI_DIGITAL_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
+                            <iframe
+                              loading="lazy"
+                              title="Kertas Kerja Majlis Apresiasi Digital"
+                              src={MAJLIS_APRESIASI_DIGITAL_EMBED}
+                              width="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
+                              allowFullScreen
+                              allow="fullscreen"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-base font-semibold text-white">
+                              Slaid Majlis Apresiasi
+                            </h3>
+                            <a
+                              href={SLAID_MAJLIS_APRESIASI_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
+                            <iframe
+                              loading="lazy"
+                              title="Slaid Majlis Apresiasi"
+                              src={SLAID_MAJLIS_APRESIASI_EMBED}
+                              width="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
+                              allowFullScreen
+                              allow="fullscreen"
+                            />
+                          </div>
+                        </article>
                         <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
                           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                             <h3 className="text-base font-semibold text-white">Pencapaian USTP 2025</h3>
@@ -4133,8 +5063,9 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Penyebaran dasar</p>
                         <p className="text-xs text-slate-400">
-                          MJ3PD 2025 · JKPA 2026 · JKPA 2025 · JKPA 2024 (Canva — pratontak
-                          & pautan penuh)
+                          MJ3PD 2025 · JKPA 2026 · JKPA 2025 · JKPA 2024 (Canva) · contoh KPM
+                          (hebahan COE) · pameran (Hari Guru 2025, R.E.A.Digital, Townhall Ipoh
+                          2025 — PDF Drive)
                         </p>
                       </div>
                     </summary>
@@ -4173,75 +5104,45 @@ export default function App() {
                             </div>
                           </article>
                         ))}
+                        {PENYEBARAN_DASAR_DRIVE_PDF_CARDS.map(({ key, title, blurb, viewUrl }) => (
+                          <article
+                            key={key}
+                            className="flex min-h-[320px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
+                          >
+                            <div className="mb-2 flex flex-col gap-1">
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <h3 className="text-sm font-semibold leading-snug text-white">
+                                  {title}
+                                </h3>
+                                <a
+                                  href={viewUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                                >
+                                  Buka Penuh
+                                </a>
+                              </div>
+                              <p className="text-[11px] leading-relaxed text-slate-500">{blurb}</p>
+                            </div>
+                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
+                              <iframe
+                                loading="lazy"
+                                title={title}
+                                src={driveGoogleFilePreviewUrl(viewUrl)}
+                                width="100%"
+                                style={{ border: 0, background: "#0b1220" }}
+                                className="h-[min(38vh,280px)] w-full sm:h-[min(44vh,320px)]"
+                                allowFullScreen
+                              />
+                            </div>
+                          </article>
+                        ))}
                       </div>
                     <DetailsCollapseFooter />
                     </div>
                   </details>
 
-                  <div className="mt-6 space-y-3 border-t border-cyan-400/15 pt-4">
-                    <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-400/30 bg-purple-500/10 text-purple-200">
-                          <svg
-                            className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            aria-hidden
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                            />
-                          </svg>
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">Bahan Rujukan</p>
-                          <p className="text-xs text-slate-400">
-                            Kertas kerja, OPPR & lain-lain (MJ3PD/JKPA: Penyebaran dasar;
-                            surat rasmi: Surat punca kuasa)
-                          </p>
-                        </div>
-                      </summary>
-                      <div className="space-y-2 overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-3">
-                        <a
-                          href={MAJLIS_APRESIASI_DIGITAL_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-xl border border-cyan-400/15 bg-slate-950/45 px-3 py-2.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-400/45 hover:bg-slate-900/55 hover:shadow-[0_0_18px_rgba(0,229,255,0.08)]"
-                        >
-                          Kertas Kerja Majlis Apresiasi Digital
-                        </a>
-                        <a
-                          href={KERTAS_KERJA_EDUSPARK_COE_ROADSHOW_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-xl border border-cyan-400/15 bg-slate-950/45 px-3 py-2.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-400/45 hover:bg-slate-900/55 hover:shadow-[0_0_18px_rgba(0,229,255,0.08)]"
-                        >
-                          Kertas Kerja Program Eduspark COE Roadshow
-                        </a>
-                        <a
-                          href={OPPR_PENDIDIKAN_PERAK_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-xl border border-cyan-400/15 bg-slate-950/45 px-3 py-2.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-400/45 hover:bg-slate-900/55 hover:shadow-[0_0_18px_rgba(0,229,255,0.08)]"
-                        >
-                          OPPR Pendigitalan Perak
-                        </a>
-                        <a
-                          href={ANALISIS_PENARAFAN_KENDIRI_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-xl border border-cyan-400/15 bg-slate-950/45 px-3 py-2.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-400/45 hover:bg-slate-900/55 hover:shadow-[0_0_18px_rgba(0,229,255,0.08)]"
-                        >
-                          Analisis Penarafan Kendiri
-                        </a>
-                      <DetailsCollapseFooter />
-                      </div>
-                    </details>
-                  </div>
                   <DetailsCollapseFooter />
                 </div>
               </details>
