@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
+import { OscSheetCardGrid } from "./components/OscSheetCardGrid.jsx";
+import {
+  canvaViewEmbedUrl,
+  driveGoogleFilePreviewUrl,
+  googleDocEmbedPreviewUrl,
+} from "./lib/embedUrls.js";
 
 /** Logo rasmi PPD (PNG telus) — watermark latar tiga mod reka */
 const USTP_WATERMARK_SRC = "/assets/ustp-ppd-manjung-watermark.png";
@@ -656,10 +662,6 @@ const PENYEBARAN_DASAR_DRIVE_PDF_CARDS = [
   },
 ];
 
-function canvaViewEmbedUrl(viewUrl) {
-  return viewUrl.includes("?") ? `${viewUrl}&embed` : `${viewUrl}?embed`;
-}
-
 /** Google Drive — PDF surat pemerkasaan DELIMa */
 const SURAT_PEMERKASAAN_DELIMA_2023_2024_URL =
   "https://drive.google.com/file/d/1lyQd8IOz4lmgAFo9Lz2ZK9bKDZQNPy4F/view?usp=sharing";
@@ -668,22 +670,6 @@ const SURAT_PEMERKASAAN_DELIMA_2025_2026_URL =
 /** Surat arahan khidmat sokongan — ARAHAN TUGAS USTP 2026 (PDF Drive) */
 const SURAT_ARAHAN_KHIDMAT_SOKONGAN_USTP_2026_URL =
   "https://drive.google.com/file/d/1Ycx8VFxQryk0Gt-XR2mKhRLEugAdpQkC/view?usp=sharing";
-
-function driveGoogleFilePreviewUrl(viewUrl) {
-  const s = String(viewUrl ?? "");
-  const fileD = s.match(/\/file\/d\/([^/?]+)/);
-  if (fileD) return `https://drive.google.com/file/d/${fileD[1]}/preview`;
-  if (s.includes("drive.google.com")) {
-    const openId = s.match(/[?&]id=([^&]+)/);
-    if (openId) return `https://drive.google.com/file/d/${openId[1]}/preview`;
-  }
-  return s;
-}
-
-function googleDocEmbedPreviewUrl(docUrl) {
-  const m = docUrl.match(/\/document\/d\/([^/?]+)/);
-  return m ? `https://docs.google.com/document/d/${m[1]}/preview` : docUrl;
-}
 
 /** Kad surat dalam Bahan Sokongan — Surat punca kuasa */
 const SURAT_PUNCA_KUASA_CARDS = [
@@ -707,6 +693,45 @@ const SURAT_PUNCA_KUASA_CARDS = [
   },
 ];
 
+/** Sandaran jika sheet tiada / ralat — sama struktur seperti Google Sheet (lihat public/data/osc-sheet-template.csv) */
+const CONTOH_BAHAN_DELIMA_FALLBACK = [
+  {
+    key: "jadual-delima-smk-raja-shahriman",
+    title: "JADUAL PENGGUNAAN DELIMA GURU SMK RAJA SHAHRIMAN",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1rIkmt3ym-RtaLSS0x1PWkAKKBt7sTZ7r/view?usp=drive_link",
+  },
+  {
+    key: "contoh-gc-smk-raja-shahriman",
+    title: "Contoh GC SMK RAJA SHAHRIMAN",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1lPacjoL4whMEZzttJcN0ZbjNc3-oGm26/view?usp=drive_link",
+  },
+  {
+    key: "jadual-ict-delima-sjkt-kg-columbia",
+    title: "Jadual Penggunaan ICT & DELIMa SJKT KG COLUMBIA",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1GjYLq3F7W7KR-AZG1LCuR4hn9UWkACow/view?usp=drive_link",
+  },
+  {
+    key: "jadual-delima-sjkc-pei-ching",
+    title: "Jadual DELIMa SJKC Pei Ching",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1HsEmsqsuPmYlLdgEvBqTcakCIhQVMFwE/view?usp=drive_link",
+  },
+  {
+    key: "opr-delima-sjkt-ladang-cashwood",
+    title: "OPR DELIMa SJKT LADANG CASHWOOD",
+    blurb: "PDF (Google Drive)",
+    viewUrl:
+      "https://drive.google.com/file/d/1cbZI8GH_nsXABQe6wNpu-5SLQPj41QLV/view?usp=drive_link",
+  },
+];
+
 const PENCAPAIAN_USTP_2025_URL =
   "https://www.canva.com/design/DAGxVjtQuhg/FTA-gZELFpsmrLn3HyhRnQ/view";
 const PENCAPAIAN_USTP_2025_EMBED = `${PENCAPAIAN_USTP_2025_URL}?embed`;
@@ -714,6 +739,20 @@ const TIKTOK_USTP_MANJUNG_URL =
   "https://www.tiktok.com/@ustpmanjung1?is_from_webapp=1&sender_device=pc";
 const YOUTUBE_USTP_MANJUNG_URL =
   "https://www.youtube.com/channel/UC00YHEDSN_X5xVGqV9b4rmw";
+/** Program Pemerkasaan Bacaan Murid — Bicara Buku (YouTube Live / rakaman) */
+const BICARA_BUKU_YOUTUBE_WATCH_URL =
+  "https://www.youtube.com/live/XmP3d3XwdC4";
+const BICARA_BUKU_YOUTUBE_EMBED_URL =
+  "https://www.youtube.com/embed/XmP3d3XwdC4";
+/** Program Pemerkasaan Bacaan Murid — Video kreatif (Google Docs) */
+const PEMERKASAAN_VIDEO_KREATIF_LENSA_EDU_DOC_URL =
+  "https://docs.google.com/document/d/1GArnxqpVufIKIzxzjgkYHu5TU_yw9nic7NKsFUeMKeQ/edit?tab=t.0";
+/** Program Pemerkasaan Bacaan Murid — Video kreatif IMPAK TVPSS (PDF, Google Drive) */
+const PEMERKASAAN_VIDEO_KREATIF_IMPAK_TVPSS_PDF_URL =
+  "https://drive.google.com/file/d/1DTDFDW46uPyiTsEvNEUJjJLVMOE2pBuc/view?usp=drive_link";
+/** Program Pemerkasaan Bacaan Murid — Pembaca Bestari (Google Docs) */
+const PEMERKASAAN_PEMBACA_BESTARI_PENILAIAN_DOC_URL =
+  "https://docs.google.com/document/d/1FDPdQjRbPcv7dA-drIpWw0gghPu3OG7xSp2DRwiH8TU/edit?tab=t.0";
 /** Pratontak skrin — fail dalam `public/` */
 const VIDEO_CARD_TIKTOK_IMAGE = `${import.meta.env.BASE_URL}video-card-tiktok.png`;
 const VIDEO_CARD_YOUTUBE_IMAGE = `${import.meta.env.BASE_URL}video-card-youtube.png`;
@@ -871,6 +910,15 @@ const INTEGRASI_JNJ_YTY_PDF_CARDS = [
   },
 ];
 
+/** Integrasi — Impak JNJ (imej ringkasan dalam public/) */
+const INTEGRASI_IMPAK_JNJ_MYRC_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-myrc.jpg`;
+const INTEGRASI_IMPAK_JNJ_MINECRAFT_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-minecraft.jpg`;
+const INTEGRASI_IMPAK_JNJ_PANDAI_APP_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-pandai-app.jpg`;
+const INTEGRASI_IMPAK_JNJ_REKA_EDUKIT_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-reka-edukit.jpg`;
+/** Impak JNJ — Mikrobotik & Reka Edukit (PDF, Google Drive) */
+const INTEGRASI_IMPAK_JNJ_MIKROBOTIK_REKA_EDUKIT_PDF_URL =
+  "https://drive.google.com/file/d/15kvLB4q5Z8-zw-YnPz5wbS9qqMqZOUr5/view?usp=drive_link";
+
 /** Hebahan Pendidikan Digital — COE kepada komuniti (imej dalam public/) */
 const HEBAHAN_HARI_TERBUKA_PPD_MANJUNG_IMG = `${import.meta.env.BASE_URL}hebahan-hari-terbuka-ppd-manjung.png`;
 const HEBAHAN_HARI_TERBUKA_PAMERAN_USTP_IMG = `${import.meta.env.BASE_URL}hebahan-hari-terbuka-pameran-ustp.png`;
@@ -888,10 +936,6 @@ const ITM_JNJ_IAB_DOC_URL =
 /** ITM — JNJ NADI (PDF, Google Drive) */
 const ITM_JNJ_NADI_PDF_URL =
   "https://drive.google.com/file/d/1OIh9uBmlUZN5AvfVV25HcUjsSAfEX-Y3/view?usp=drive_link";
-/** ITM — Impak JNJ (imej ringkasan dalam public/) */
-const ITM_IMPAK_JNJ_MYRC_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-myrc.jpg`;
-const ITM_IMPAK_JNJ_MINECRAFT_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-minecraft.jpg`;
-const ITM_IMPAK_JNJ_PANDAI_APP_IMG = `${import.meta.env.BASE_URL}itm-impak-jnj-pandai-app.jpg`;
 
 /** Pembudayaan Amalan Membaca — JNJ Blink Book (RAK MAYA) */
 const PEMBUDAYAAN_JNJ_BLINK_BOOK_PSS_MAYA_URL = "https://sesdamaya.rakmaya.com/";
@@ -2825,7 +2869,7 @@ export default function App() {
                     </p>
                     <p className="text-xs text-slate-400">
                       Subtopik: Kertas kerja · Laporan · JNJ (YTY, Pandai, Goolee, Minecraft,
-                      Mikrobotik &amp; Edu Kit, kolaborasi &amp; Ana Muslim)
+                      Mikrobotik &amp; Edu Kit, kolaborasi &amp; Ana Muslim) · Impak JNJ
                     </p>
                   </div>
                 </summary>
@@ -3008,7 +3052,7 @@ export default function App() {
                     </div>
                   </details>
 
-                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-200">
                         <svg
@@ -3240,6 +3284,185 @@ export default function App() {
                         ))}
                       </div>
                     <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-orange-400/35 bg-orange-500/10 text-orange-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Impak JNJ</p>
+                        <p className="text-xs text-slate-400">
+                          MYRC · Minecraft · Pandai Apps · Reka Edukit · Mikrobotik &amp; Reka
+                          Edukit (PDF) — ringkasan pencapaian &amp; susulan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ MYRC
+                            </h3>
+                            <a
+                              href={INTEGRASI_IMPAK_JNJ_MYRC_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            Top 3 kategori sekolah rendah dan sekolah menengah pada peringkat
+                            negeri; tempat kelima pada peringkat kebangsaan.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={INTEGRASI_IMPAK_JNJ_MYRC_IMG}
+                              alt="Impak JNJ MYRC — ringkasan pencapaian"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ Minecraft
+                            </h3>
+                            <a
+                              href={INTEGRASI_IMPAK_JNJ_MINECRAFT_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            Impak sekolah yang masuk bengkel: Raja Shariman, Methodist dan
+                            Dindings. Tahun 2026: 6 SR terpilih untuk program yang sama —
+                            jadual Mei 2026.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={INTEGRASI_IMPAK_JNJ_MINECRAFT_IMG}
+                              alt="Impak JNJ Minecraft — ringkasan sekolah & susulan 2026"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              Impak JNJ Pandai Apps
+                            </h3>
+                            <a
+                              href={INTEGRASI_IMPAK_JNJ_PANDAI_APP_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            SK Seri Bayu Seri Manjung menang kategori murid peringkat
+                            kebangsaan.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={INTEGRASI_IMPAK_JNJ_PANDAI_APP_IMG}
+                              alt="Impak JNJ Pandai Apps — SK Seri Bayu Seri Manjung"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-snug text-white">
+                              IMPAK REKA EDUKIT
+                            </h3>
+                            <a
+                              href={INTEGRASI_IMPAK_JNJ_REKA_EDUKIT_IMG}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
+                            >
+                              Buka gambar penuh
+                            </a>
+                          </div>
+                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                            Ringkasan impak JNJ Reka Edukit — rujuk gambar penuh untuk butiran.
+                          </p>
+                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
+                            <img
+                              src={INTEGRASI_IMPAK_JNJ_REKA_EDUKIT_IMG}
+                              alt="IMPAK REKA EDUKIT — JNJ"
+                              className="w-full min-w-0 object-contain object-top"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                IMPAK MIKROBIT &amp; REKA EDUKIT
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                Bengkel dan impak peringkat kebangsaan — PDF (Google Drive)
+                              </p>
+                            </div>
+                            <a
+                              href={INTEGRASI_IMPAK_JNJ_MIKROBOTIK_REKA_EDUKIT_PDF_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="IMPAK Mikrobotik & Reka Edukit — PDF"
+                              src={driveGoogleFilePreviewUrl(
+                                INTEGRASI_IMPAK_JNJ_MIKROBOTIK_REKA_EDUKIT_PDF_URL,
+                              )}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                      </div>
+                      <DetailsCollapseFooter />
                     </div>
                   </details>
                   <DetailsCollapseFooter />
@@ -3517,8 +3740,7 @@ export default function App() {
                       Inisiatif Teknologi Maklumat
                     </p>
                     <p className="text-xs text-slate-400">
-                      Subtopik: Google Classroom · JNJ (MAXIS, IAB, NADI) · Impak JNJ · Laman web
-                      sekolah
+                      Subtopik: Google Classroom · JNJ (MAXIS, IAB, NADI) · Laman web sekolah
                     </p>
                   </div>
                 </summary>
@@ -3706,123 +3928,6 @@ export default function App() {
                         </article>
                       </div>
                     <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-orange-400/35 bg-orange-500/10 text-orange-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Impak JNJ</p>
-                        <p className="text-xs text-slate-400">
-                          MYRC · Minecraft · Pandai Apps — ringkasan pencapaian &amp; susulan
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                            <h3 className="text-sm font-semibold leading-snug text-white">
-                              Impak JNJ MYRC
-                            </h3>
-                            <a
-                              href={ITM_IMPAK_JNJ_MYRC_IMG}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
-                            >
-                              Buka gambar penuh
-                            </a>
-                          </div>
-                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-                            Top 3 kategori sekolah rendah dan sekolah menengah pada peringkat
-                            negeri; tempat kelima pada peringkat kebangsaan.
-                          </p>
-                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
-                            <img
-                              src={ITM_IMPAK_JNJ_MYRC_IMG}
-                              alt="Impak JNJ MYRC — ringkasan pencapaian"
-                              className="w-full min-w-0 object-contain object-top"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                            <h3 className="text-sm font-semibold leading-snug text-white">
-                              Impak JNJ Minecraft
-                            </h3>
-                            <a
-                              href={ITM_IMPAK_JNJ_MINECRAFT_IMG}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
-                            >
-                              Buka gambar penuh
-                            </a>
-                          </div>
-                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-                            Impak sekolah yang masuk bengkel: Raja Shariman, Methodist dan
-                            Dindings. Tahun 2026: 6 SR terpilih untuk program yang sama —
-                            jadual Mei 2026.
-                          </p>
-                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
-                            <img
-                              src={ITM_IMPAK_JNJ_MINECRAFT_IMG}
-                              alt="Impak JNJ Minecraft — ringkasan sekolah & susulan 2026"
-                              className="w-full min-w-0 object-contain object-top"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                            <h3 className="text-sm font-semibold leading-snug text-white">
-                              Impak JNJ Pandai Apps
-                            </h3>
-                            <a
-                              href={ITM_IMPAK_JNJ_PANDAI_APP_IMG}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
-                            >
-                              Buka gambar penuh
-                            </a>
-                          </div>
-                          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-                            SK Seri Bayu Seri Manjung menang kategori murid peringkat
-                            kebangsaan.
-                          </p>
-                          <div className="mt-auto max-h-[min(56vh,480px)] min-h-[180px] flex-1 overflow-auto rounded-lg border border-cyan-400/15 bg-black/20">
-                            <img
-                              src={ITM_IMPAK_JNJ_PANDAI_APP_IMG}
-                              alt="Impak JNJ Pandai Apps — SK Seri Bayu Seri Manjung"
-                              className="w-full min-w-0 object-contain object-top"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </div>
-                        </article>
-                      </div>
-                      <DetailsCollapseFooter />
                     </div>
                   </details>
 
@@ -4458,9 +4563,76 @@ export default function App() {
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <p className="text-sm text-slate-400">
-                        Ruangan Video kreatif — pautan atau embed akan ditambah apabila sedia.
-                      </p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
+                        <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                BENGKEL PRODUKSI MEDIA DAN KANDUNGAN DIGITAL LENSA EDU PERAK 3.0
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                LAPORAN SPb 7/22/2025 — Google Docs
+                              </p>
+                            </div>
+                            <a
+                              href={PEMERKASAAN_VIDEO_KREATIF_LENSA_EDU_DOC_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="BENGKEL PRODUKSI MEDIA DAN KANDUNGAN DIGITAL LENSA EDU PERAK 3.0 — Google Docs"
+                              src={googleDocEmbedPreviewUrl(
+                                PEMERKASAAN_VIDEO_KREATIF_LENSA_EDU_DOC_URL,
+                              )}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                        <article className="flex min-h-[280px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                IMPAK TVPSS
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                PDF (Google Drive)
+                              </p>
+                            </div>
+                            <a
+                              href={PEMERKASAAN_VIDEO_KREATIF_IMPAK_TVPSS_PDF_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="IMPAK TVPSS — PDF"
+                              src={driveGoogleFilePreviewUrl(
+                                PEMERKASAAN_VIDEO_KREATIF_IMPAK_TVPSS_PDF_URL,
+                              )}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                      </div>
                       <DetailsCollapseFooter />
                     </div>
                   </details>
@@ -4491,9 +4663,42 @@ export default function App() {
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <p className="text-sm text-slate-400">
-                        Ruangan Bicara Buku — kandungan akan dikemas kini.
-                      </p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch lg:max-w-4xl">
+                        <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl sm:col-span-2">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                Bicara Buku — siaran YouTube
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                Rakaman / live — buka penuh di YouTube jika embed tidak dimuatkan
+                              </p>
+                            </div>
+                            <a
+                              href={BICARA_BUKU_YOUTUBE_WATCH_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka di YouTube
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="Bicara Buku — Program Pemerkasaan Bacaan Murid (YouTube)"
+                              src={BICARA_BUKU_YOUTUBE_EMBED_URL}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            />
+                          </div>
+                        </article>
+                      </div>
                       <DetailsCollapseFooter />
                     </div>
                   </details>
@@ -4524,9 +4729,42 @@ export default function App() {
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <p className="text-sm text-slate-400">
-                        Ruangan Pembaca Bestari — kandungan akan dikemas kini.
-                      </p>
+                      <div className="grid grid-cols-1 gap-3 sm:items-stretch lg:max-w-4xl">
+                        <article className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
+                          <div className="mb-2 flex min-h-[4.5rem] flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 pr-1">
+                              <h3 className="text-sm font-semibold leading-snug text-white">
+                                PENILAIAN PEMBACA BESTARI PERINGKAT NEGERI PERAK
+                              </h3>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                                LAPORAN SPb 9/22/2025 — Google Docs
+                              </p>
+                            </div>
+                            <a
+                              href={PEMERKASAAN_PEMBACA_BESTARI_PENILAIAN_DOC_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 self-start rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
+                            >
+                              Buka Penuh
+                            </a>
+                          </div>
+                          <div className="h-[280px] w-full shrink-0 overflow-hidden rounded-lg border border-cyan-400/15 sm:h-[320px]">
+                            <iframe
+                              loading="lazy"
+                              title="PENILAIAN PEMBACA BESTARI PERINGKAT NEGERI PERAK — Google Docs"
+                              src={googleDocEmbedPreviewUrl(
+                                PEMERKASAAN_PEMBACA_BESTARI_PENILAIAN_DOC_URL,
+                              )}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0, background: "#0b1220" }}
+                              className="block h-full w-full"
+                              allowFullScreen
+                            />
+                          </div>
+                        </article>
+                      </div>
                       <DetailsCollapseFooter />
                     </div>
                   </details>
@@ -4556,7 +4794,7 @@ export default function App() {
                     <p className="text-sm font-semibold text-white">Bahan Sokongan</p>
                     <p className="text-xs text-slate-400">
                       Buku pengurusan, pelaporan, pencapaian, surat, penyebaran dasar
-                      (MJ3PD/JKPA), bahan PDP digital
+                      (MJ3PD/JKPA), bahan PDP digital · Contoh Bahan Delima
                     </p>
                   </div>
                 </summary>
@@ -5140,6 +5378,41 @@ export default function App() {
                         ))}
                       </div>
                     <DetailsCollapseFooter />
+                    </div>
+                  </details>
+
+                  <details className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/35 bg-indigo-500/10 text-indigo-200">
+                        <svg
+                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-105"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">Contoh Bahan Delima</p>
+                        <p className="text-xs text-slate-400">
+                          Jadual penggunaan DELIMA / DELIMa, contoh GC, OPR — PDF sekolah rujukan
+                        </p>
+                      </div>
+                    </summary>
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <OscSheetCardGrid
+                        key="contoh-bahan-delima"
+                        section="contoh-bahan-delima"
+                        fallbackCards={CONTOH_BAHAN_DELIMA_FALLBACK}
+                      />
+                      <DetailsCollapseFooter />
                     </div>
                   </details>
 
