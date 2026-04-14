@@ -1,0 +1,12 @@
+﻿import fs from "fs";
+import path from "path";
+import { cwd } from "process";
+const root = cwd();
+const appPath = path.join(root, "src", "App.jsx");
+const frag = (n) => fs.readFileSync(path.join(root, "scripts", "fragments", n), "utf8").replace(/\r\n/g, "\n");
+let s = fs.readFileSync(appPath, "utf8").replace(/\r\n/g, "\n");
+const pensRe = new RegExp(String.raw`/\*\* Ringkasan statistik pada kad \(selari data dalam infografik\) \*/\nfunction PensijilanDigitalSummary\(\) \{[\s\S]*?\n\}\n\n/\*\* Garisan KPI kebangsaan`);
+if (!pensRe.test(s)) throw new Error("pens");
+s = s.replace(pensRe, frag("pensijilan.txt") + "\n\n" + "/*" + "* Garisan KPI kebangsaan");
+fs.writeFileSync(appPath, s, "utf8");
+console.log("pens ok");

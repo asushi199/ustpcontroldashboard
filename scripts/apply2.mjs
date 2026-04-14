@@ -1,0 +1,15 @@
+﻿import fs from "fs";
+import path from "path";
+import { cwd } from "process";
+const root = cwd();
+const appPath = path.join(root, "src", "App.jsx");
+const frag = (n) => fs.readFileSync(path.join(root, "scripts", "fragments", n), "utf8").replace(/\r\n/g, "\n");
+let s = fs.readFileSync(appPath, "utf8").replace(/\r\n/g, "\n");
+const aiRe = /^function AiToolsDelimaSummary\(\) \{[\s\S]*?\n\}\n\nfunction StatusPill/m;
+if (!aiRe.test(s)) throw new Error("ai");
+s = s.replace(aiRe, frag("aitools.txt") + "\n\nfunction StatusPill");
+const dcsRe = new RegExp(String.raw`/\*\* Carta garis: trend daerah TOV \u2192 capai 2025 \+ garisan sasaran KPI kebangsaan\. \*/\nfunction DcsKpiLineChart\(\) \{[\s\S]*?\n\}\n\n/\*\* Carta ringkas Program Ains`);
+if (!dcsRe.test(s)) throw new Error("dcs");
+s = s.replace(dcsRe, frag("dcs-chart.txt") + "\n\n" + "/*" + "* Carta ringkas Program Ains");
+fs.writeFileSync(appPath, s, "utf8");
+console.log("phase2");

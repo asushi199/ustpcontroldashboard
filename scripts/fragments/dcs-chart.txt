@@ -1,0 +1,140 @@
+﻿/** Carta garis: trend daerah TOV → capai 2025 + garisan sasaran KPI kebangsaan. */
+function DcsKpiLineChart({
+  tov = DCS_TOV_2024_DAERAH,
+  kpi = DCS_KPI_2025_KEBANGSAAN,
+  capai = DCS_CAPAI_2025_DAERAH,
+  yMin = 58,
+  yMax = 82,
+} = {}) {
+  const W = 400;
+  const H = 168;
+  const pad = { l: 40, r: 28, t: 18, b: 44 };
+  const innerW = W - pad.l - pad.r;
+  const innerH = H - pad.t - pad.b;
+  const yAt = (pct) =>
+    pad.t + (1 - (pct - yMin) / (yMax - yMin)) * innerH;
+
+  const x0 = pad.l;
+  const x1 = pad.l + innerW;
+  const xCapaiLabel = x1 - 22;
+  const y0 = yAt(tov);
+  const y1 = yAt(capai);
+  const yKpi = yAt(kpi);
+
+  const yTicks = [60, 65, 70, 75, 80].filter((v) => v >= yMin && v <= yMax);
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-auto w-full max-w-full text-slate-500"
+      role="img"
+      aria-label={`Trend capaian DCS daerah daripada ${tov}% ke ${capai}%, sasaran kebangsaan ${kpi}%`}
+    >
+      <defs>
+        <linearGradient id="dcsAreaFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {yTicks.map((v) => {
+        const y = yAt(v);
+        return (
+          <g key={v}>
+            <line
+              x1={pad.l}
+              y1={y}
+              x2={x1}
+              y2={y}
+              stroke="currentColor"
+              strokeOpacity={0.1}
+              strokeWidth={1}
+            />
+            <text
+              x={pad.l - 6}
+              y={y + 3}
+              textAnchor="end"
+              className="fill-slate-500"
+              style={{ fontSize: 9 }}
+            >
+              {v}%
+            </text>
+          </g>
+        );
+      })}
+
+      <line
+        x1={x0}
+        y1={yKpi}
+        x2={x1}
+        y2={yKpi}
+        stroke="#fbbf24"
+        strokeWidth={1.75}
+        strokeDasharray="7 5"
+        strokeOpacity={0.95}
+      />
+      <text
+        x={x1}
+        y={yKpi - 5}
+        textAnchor="end"
+        className="fill-amber-200"
+        style={{ fontSize: 9 }}
+      >
+        Sasaran KPI kebangsaan ({kpi}%)
+      </text>
+
+      <path
+        d={`M ${x0} ${pad.t + innerH} L ${x0} ${y0} L ${x1} ${y1} L ${x1} ${pad.t + innerH} Z`}
+        fill="url(#dcsAreaFill)"
+      />
+      <path
+        d={`M ${x0} ${y0} L ${x1} ${y1}`}
+        fill="none"
+        stroke="#22d3ee"
+        strokeWidth={2.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <circle cx={x0} cy={y0} r={4.5} fill="#0f172a" stroke="#22d3ee" strokeWidth={2} />
+      <circle cx={x1} cy={y1} r={6} fill="#34d399" stroke="#6ee7b7" strokeWidth={2} />
+
+      <text
+        x={x0}
+        y={H - 10}
+        textAnchor="middle"
+        className="fill-slate-400"
+        style={{ fontSize: 10 }}
+      >
+        TOV 2024
+      </text>
+      <text
+        x={x0}
+        y={H - 22}
+        textAnchor="middle"
+        className="fill-cyan-200/90"
+        style={{ fontSize: 9 }}
+      >
+        {tov}%
+      </text>
+      <text
+        x={xCapaiLabel}
+        y={H - 10}
+        textAnchor="middle"
+        className="fill-slate-400"
+        style={{ fontSize: 10 }}
+      >
+        Capai 2025
+      </text>
+      <text
+        x={xCapaiLabel}
+        y={H - 22}
+        textAnchor="middle"
+        className="fill-emerald-300/95"
+        style={{ fontSize: 9 }}
+      >
+        {capai}%
+      </text>
+    </svg>
+  );
+}

@@ -1,0 +1,64 @@
+---
+description: 通用协作、安全与任务分级（与 project.mdc 并存；冲突时以更严者为准）
+alwaysApply: true
+---
+
+# 通用协作与任务分级
+
+与本仓库 **USTP 专项约定**（技术栈、两列卡片、Sheet 等）见同目录 `project.mdc`。  
+若本文件与 `project.mdc` 或其它规则冲突，**以更严格或更针对本仓库的规则为准**。
+
+## Communication
+
+- Prefer clear, concise answers. If the user writes in Chinese, reply in Chinese unless they ask for English.
+- 中文：用户用中文就用中文回，除非他要求英文。
+
+## Editing scope & cost
+
+- Prefer **small, targeted changes**. Do not refactor unrelated files or “clean up” code unless explicitly requested.
+- Start from the **smallest relevant context**（打开的文件、用户给出的路径、`grep`/精确搜索），避免无目的地扫全库。
+- Do not delete or rewrite user data, local databases, or generated runtime files（例如 `data/` 下 `*.json`、`.sqlite`）**unless the user explicitly asks** to reset or migrate them.
+- 中文：少改、准改；别乱扫全库；运行时数据别手改除非用户明说。
+
+## Security
+
+- Never commit or paste real secrets（API keys、tokens、passwords）。示例用占位符；提醒用户使用环境变量或密钥管理。
+- 中文：密钥别写进代码和聊天示例里。
+
+## Quality
+
+- Match the project’s existing style（imports、naming、formatting）。**不要**擅自新增 README/文档，除非用户明确要求。
+- 对新手：建议终端命令时给 **可复制粘贴** 的步骤，并附一行说明用途。
+- 中文：风格跟项目走；新手要给可直接复制的命令。
+
+## 任务分级与协议（摘要）
+
+| 级别 | 典型触发 | 协议 |
+|------|----------|------|
+| **SIMPLE** | 单函数、单文件、无状态、无副作用 | 直接给结果；**不**强制输出下方 Pre-Code Checklist |
+| **COMPLEX** | 多模块、状态/异步、架构或跨模块集成 | 实现前在脑中过一遍边界与错误处理；**若改动面广**，可在回复中简要列出假设与风险 |
+| **SENSITIVE** | 鉴权、加密、访问控制、用户隐私数据 | 同上 + **必须**简要说明威胁面与缓解（不可因「简单」而省略） |
+
+**优先级**：`SENSITIVE` > `COMPLEX` > `SIMPLE`。
+
+**多子任务**：各子任务独立分级；若任一为 SENSITIVE，**该子任务**说明威胁模型，不挪到整段最后才写。
+
+### Fast Mode（用户显式触发时）
+
+用户以 **`/fast`**、**`/code`** 或行首 **`quick:`** 发起时：可省略长篇分析段落，但仍需 **正确、可维护的实现**；**SENSITIVE** 不得省略威胁/隐私层面的必要提醒。
+
+### 依赖策略（摘要）
+
+引入第三方库前优先考量：**(b) 安全关键域** 是否应用成熟库 → **(c)** 是否已是项目依赖 → **(a)** 自研是否明显超过约 30 行非平凡逻辑。禁止仅为省事而加库。
+
+### Pre-Code Checklist（仅 COMPLEX / SENSITIVE 且涉及实质代码时）
+
+在输出主要代码前，可在回复中 **简短自检**（不必逐条展开长文），确保：
+
+- 边界情况（空值、空集合、异常输入、编码）有考虑；
+- 错误处理明确，避免静默吞掉异常或未处理的 Promise；
+- 异步与 `useEffect` 等注意取消/竞态；
+- 新依赖符合上文依赖策略；
+- 与项目技术栈及 `project.mdc` 一致。
+
+**SIMPLE 任务**：不强制输出本 Checklist。

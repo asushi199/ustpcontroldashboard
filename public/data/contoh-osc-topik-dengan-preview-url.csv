@@ -1,0 +1,5 @@
+subtopik_key,subtopik_title,subtopik_sort,subtopik_blurb,subtopik_icon,sort,key,title,url,type,blurb,preview_url
+contoh-inovasi,Program Inovasi,2,"Video Drive + kad imej ke halaman web: url = destinasi klik; preview_url = imej pratontak (pilihan)",lightbulb,1,inv-video-1,Video Inovasi (contoh Drive),https://drive.google.com/file/d/GANTI_ID_FAIL_ANDA/view,pdf,"Drive mesti: Sesiapa yang mempunyai pautan boleh lihat",
+contoh-inovasi,Program Inovasi,2,,lightbulb,2,inv-bahan-1,Bahan Inovasi (contoh imej + pautan Artsteps),https://www.artsteps.com/view/GANTI_ID,image,"url = halaman Artsteps; preview_url = imej terus atau Drive imej",https://drive.google.com/file/d/GANTI_ID_IMEJ_PRATONTAK/view
+contoh-inovasi,Program Inovasi,2,,lightbulb,3,inv-bahan-2,Bahan Inovasi (imej dalam public/),https://www.artsteps.com/view/GANTI_ID,image,"Jika imej dalam folder public laman:",/itm-card-google-classroom-ustp-manjung.png
+contoh-lain,Subtopik lain,1,,📢,1,lain-1,Contoh YouTube,https://www.youtube.com/watch?v=dQw4w9WgXcQ,youtube,Tukar URL video rasmi,

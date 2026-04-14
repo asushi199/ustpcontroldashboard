@@ -1,0 +1,28 @@
+﻿                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                    <article className="flex min-h-[380px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h2 className="text-xl font-semibold text-white">AI Tools dalam DELIMa</h2>
+                        {optikAn?.sourceUrl ? (
+                          <a
+                            href={optikAn.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                          >
+                            {optikAn.sourceLabel || "Buka sumber"}
+                          </a>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm text-slate-300">
+                        Ringkasan OPTIK 2 berbanding garisan KPI kebangsaan — data dari Sheet.
+                      </p>
+                      {optikLoading ? (
+                        <p className="mt-3 text-sm text-slate-400">Memuatkan…</p>
+                      ) : optikError ? (
+                        <p className="mt-3 text-sm text-rose-200">{optikError}</p>
+                      ) : (
+                        <AiToolsDelimaSummary sheet={optikAn} />
+                      )}
+                    </article>
+                    <DetailsCollapseFooter />
+                    </div>

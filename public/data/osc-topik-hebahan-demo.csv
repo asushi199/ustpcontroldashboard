@@ -1,0 +1,6 @@
+subtopik_key,subtopik_title,subtopik_sort,subtopik_blurb,sort,key,title,url,type,blurb
+contoh-hari-terbuka,Hari terbuka (contoh templat),1,Gambar dalam folder public/ — type = image,1,heb-ht-1,Hari Terbuka PPD Manjung,/hebahan-hari-terbuka-ppd-manjung.png,image,Contoh pratontak imej
+contoh-hari-terbuka,Hari terbuka (contoh templat),1,,2,heb-ht-2,Pameran USTP (Hari Terbuka),/hebahan-hari-terbuka-pameran-ustp.png,image,
+contoh-karnival,Karnival digital (contoh templat),2,,1,heb-kar-1,Karnival Digital PPD Manjung,/hebahan-karnival-digital-ppd-manjung.png,image,
+contoh-karnival,Karnival digital (contoh templat),2,,2,heb-kar-2,Karnival Digital Pulau Pangkor,/hebahan-karnival-digital-pulau-pangkor.png,image,
+contoh-pameran,Pameran COE (contoh templat),3,,1,heb-pam-1,Pameran COE Negeri Perak,/hebahan-pameran-coe-negeri-perak.png,image,

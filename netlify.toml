@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+
+# Ralat CORS: pelayar → fungsi ini → Google Sheets export (CSV)
+# `force` elak fail / SPA salin lalai telan laluan ini
+[[redirects]]
+  from = "/api/sheet-csv"
+  to = "/.netlify/functions/sheet-csv"
+  status = 200
+  force = true

@@ -1,0 +1,4 @@
+subtopik_key,subtopik_title,subtopik_sort,subtopik_blurb,sort,key,title,url,type,blurb
+contoh-kertas-kerja,Kertas kerja (contoh templat),1,"Salin baris ke tab Google Sheet ""Integrasi"" — lajur sama, tiada ""section""",1,kk-demo-1,Kertas Kerja Program — Bengkel Digital 2025 (PDF),https://drive.google.com/file/d/1rIkmt3ym-RtaLSS0x1PWkAKKBt7sTZ7r/view,pdf,PDF Google Drive — contoh struktur
+contoh-kertas-kerja,Kertas kerja (contoh templat),1,,2,kk-demo-2,Kertas Kerja Eduspark COE Roadshow (Canva),https://www.canva.com/design/DAG0hWYthb4/bzP48XBfMSZMxXUqsL_g3g/view,canva,Canva — tukar URL kepada rekaan anda
+contoh-laporan,Laporan (contoh templat),2,,1,lap-demo-1,Takwim / Looker Studio (embed),https://lookerstudio.google.com/embed/reporting/9a5abf82-8012-42b8-aef5-cc1cebebbfe6/page/p_o99byp19xc,embed,Letak URL embed penuh dalam lajur url

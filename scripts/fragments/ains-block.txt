@@ -1,0 +1,56 @@
+﻿                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                    <article
+                      className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl"
+                    >
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-xl font-semibold text-white">Program Ains</h2>
+                        {ainsAn?.sourceUrl ? (
+                          <a
+                            href={ainsAn.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                          >
+                            {ainsAn.sourceLabel || "Buka Sheet penuh"}
+                          </a>
+                        ) : null}
+                      </div>
+                      <p className="mb-3 text-sm text-slate-400">
+                        Carta daripada nilai dalam Google Sheet — senarai pelajar dibuka di Sheet sumber.
+                      </p>
+                      <div className="flex flex-col gap-3">
+                        <div className="rounded-xl border border-cyan-400/15 bg-slate-950/40 px-2 py-2">
+                          <ProgramAinsCharts
+                            stats={ainsStats}
+                            loading={ainsLoading}
+                            error={ainsError}
+                          />
+                        </div>
+                        <div className="rounded-xl border border-cyan-400/20 bg-slate-950/20 p-3">
+                          <div className="flex flex-wrap gap-2">
+                            <StatusPill
+                              label={`Approved: ${ainsStats.approved}`}
+                              tone="good"
+                            />
+                            <StatusPill
+                              label={`Rejected: ${ainsStats.rejected}`}
+                              tone={ainsStats.rejected > 0 ? "bad" : "warn"}
+                            />
+                            <StatusPill
+                              label={`SK Approved: ${ainsStats.skApproved}`}
+                              tone="good"
+                            />
+                            <StatusPill
+                              label={`SJKC Approved: ${ainsStats.sjkcApproved}`}
+                              tone="good"
+                            />
+                            <StatusPill
+                              label={`SJKT Approved: ${ainsStats.sjktApproved}`}
+                              tone="good"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                    <DetailsCollapseFooter />
+                    </div>

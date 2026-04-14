@@ -1,0 +1,4 @@
+subtopik_key,subtopik_title,subtopik_sort,subtopik_blurb,sort,key,title,url,type,blurb
+contoh-classroom,Google Classroom (contoh templat),1,Pratontak imej - atau tukar kepada URL/Canva sendiri,1,itm-gc-1,Google Classroom USTP Manjung (contoh pratontak),/itm-card-google-classroom-ustp-manjung.png,image,Tambah pautan Classroom dalam blurb atau ganti kad
+contoh-jnj,JNJ (contoh templat),2,"type: gdoc, canva, pdf, youtube, embed",1,itm-jnj-1,JNJ MAXIS (contoh Google Docs),https://docs.google.com/document/d/1WWFVYr3diOegC380eH8_-eN953vb66Jzc4a3lFHp9GI/edit?tab=t.0,gdoc,Dokumen sebenar projek
+contoh-jnj,JNJ (contoh templat),2,,2,itm-jnj-2,Contoh PDF Drive,https://drive.google.com/file/d/1oUjyXVFSqfwhOrrr6G-GWDYVctVAtbwg/view,pdf,

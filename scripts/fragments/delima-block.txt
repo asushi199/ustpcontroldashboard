@@ -1,0 +1,58 @@
+                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
+                      <article className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl">
+                        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                          <h2 className="text-xl font-semibold text-white">Data DELIMa</h2>
+                          {(delimaAn?.sourceUrl || DELIMA_GOOGLE_SHEET_URL) ? (
+                            <a
+                              href={delimaAn?.sourceUrl || DELIMA_GOOGLE_SHEET_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                            >
+                              Buka Google Sheet
+                            </a>
+                          ) : null}
+                        </div>
+                        {delimaAn?.intro ? (
+                          <p className="mb-2 text-sm text-slate-400">{delimaAn.intro}</p>
+                        ) : (
+                          <p className="mb-2 text-sm text-slate-400">
+                            Carta purata bulanan — data dari Google Sheet (refresh halaman selepas kemaskini).
+                          </p>
+                        )}
+                        <div className="flex flex-1 flex-col gap-3 rounded-xl border border-cyan-400/20 bg-slate-950/20 p-3">
+                          {delimaAnLoading ? (
+                            <p className="text-sm text-slate-300">Memuatkan data…</p>
+                          ) : delimaAnError ? (
+                            <p className="text-sm text-rose-200">{delimaAnError}</p>
+                          ) : delimaAn && (delimaAn.seriesForChart.length > 0 || delimaAn.seriesDisplay.length > 0) ? (
+                            <>
+                              <DelimaTrendChart
+                                series={
+                                  delimaAn.seriesForChart.length > 0
+                                    ? delimaAn.seriesForChart
+                                    : delimaAn.seriesDisplay
+                                }
+                                height={220}
+                              />
+                              <DelimaMonthAvgTable seriesDisplay={delimaAn.seriesDisplay} />
+                              {DELIMA_SHOW_SASARAN_KPI ? (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  <StatusPill
+                                    label={`Sasaran guru (${delimaAn.kpiGuru}%) — rujukan Sheet`}
+                                    tone="good"
+                                  />
+                                  <StatusPill
+                                    label={`Sasaran murid (${delimaAn.kpiMurid}%) — rujukan Sheet`}
+                                    tone="good"
+                                  />
+                                </div>
+                              ) : null}
+                            </>
+                          ) : (
+                            <p className="text-sm text-slate-400">Tiada baris bulan dalam Sheet / CSV.</p>
+                          )}
+                        </div>
+                      </article>
+                      <DetailsCollapseFooter />
+                    </div>

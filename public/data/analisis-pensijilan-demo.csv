@@ -1,0 +1,14 @@
+﻿key,value
+intro,Ringkasan contoh — data lokasi & jenis sekolah boleh dikemas kini dalam Sheet.
+source_url,https://docs.google.com/spreadsheets/d/1pGLkWr8Vt4kPW7haQ-_AZ-trpptimI-5r038vWbdblk/edit
+source_label,Buka sumber pensijilan
+image_url,/assets/pensijilan-digital.png
+image_label,Lihat infografik penuh
+category,location,Bandar,1109
+category,location,Luar bandar,674
+category,school,SK,746
+category,school,SMK,436
+category,school,SJK(C),116
+category,school,SJK(T),195
+category,school,SRK,127
+category,school,SM Agama (SABK),21

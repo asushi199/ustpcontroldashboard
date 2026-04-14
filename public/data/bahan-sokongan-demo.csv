@@ -1,0 +1,4 @@
+subtopik_key,subtopik_title,subtopik_sort,subtopik_blurb,sort,key,title,url,type,blurb
+demo-buku,Buku Pengurusan (contoh Sheet),1,Data demo — set VITE_BAHAN_SOKONGAN_GID untuk tab sebenar,1,demo-buku-2025,Buku Pengurusan USTP 2025 (Canva),https://www.canva.com/design/DAGZuhOHzIM/kiiF86Fawa-ChTVvuH7DaQ/view,canva,
+demo-pelaporan,Pelaporan (contoh Sheet),2,,1,demo-takwim,Pelaporan Tambahan — Takwim,https://lookerstudio.google.com/embed/reporting/9a5abf82-8012-42b8-aef5-cc1cebebbfe6/page/p_o99byp19xc,embed,Takwim / Looker Studio
+demo-pelaporan,Pelaporan (contoh Sheet),2,,2,demo-dpd,Pelaporan DPD,https://lookerstudio.google.com/embed/reporting/97c54e64-01ea-495c-be82-300adf618bc6/page/JbWhE,embed,Looker Studio

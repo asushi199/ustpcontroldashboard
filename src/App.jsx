@@ -1,11 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { OscSheetCardGrid } from "./components/OscSheetCardGrid.jsx";
+import { BahanSokonganPageSection } from "./components/BahanSokonganPageSection.jsx";
+import { DetailsCollapseFooter } from "./components/DetailsCollapseFooter.jsx";
+import { OscTopicSheetBody } from "./components/OscTopicSheetBody.jsx";
 import {
   canvaViewEmbedUrl,
   driveGoogleFilePreviewUrl,
   googleDocEmbedPreviewUrl,
+  maklumatAsasPreviewMode,
 } from "./lib/embedUrls.js";
+import { fetchAnalisisCsvText } from "./lib/analisisSheetFetch.js";
+import {
+  parseDelimaAnalisisCsv,
+  parseDcsAnalisisCsv,
+  parseAinsAnalisisCsv,
+  parsePensijilanAnalisisCsv,
+  parseOptikAnalisisCsv,
+} from "./lib/analisisSheetParse.js";
+import { parseMaklumatAsasCsv } from "./lib/maklumatAsasSheetParse.js";
+import { parseLamanWebSekolahSheetCsv } from "./lib/lamanWebSekolahSheetParse.js";
+import { ItmLamanWebSekolahSection } from "./components/ItmLamanWebSekolahSection.jsx";
 
 /** Logo rasmi PPD (PNG telus) — watermark latar tiga mod reka */
 const USTP_WATERMARK_SRC = "/assets/ustp-ppd-manjung-watermark.png";
@@ -13,210 +27,65 @@ const USTP_WATERMARK_SRC = "/assets/ustp-ppd-manjung-watermark.png";
 const CARTA_ORGANISASI_IMG = "/assets/carta-organisasi-ustp-ppd-manjung.png";
 const MAKLUMAT_PKG_COE_IMG = "/assets/maklumat-pkg-coe-daerah-manjung.png";
 
-const TAKWIM_EMBED =
-  "https://lookerstudio.google.com/embed/reporting/9a5abf82-8012-42b8-aef5-cc1cebebbfe6/page/p_o99byp19xc";
-const PELAPORAN_DPD_EMBED =
-  "https://lookerstudio.google.com/embed/reporting/97c54e64-01ea-495c-be82-300adf618bc6/page/JbWhE";
-
 /** Kalendar kumpulan USTP (zon Asia/Kuala Lumpur) */
 const USTP_CALENDAR_EMBED =
   "https://calendar.google.com/calendar/embed?src=c_07ea831973519ec6379185af0a2fd2053aeec6d5c15fab56dc24461b74e5c2e2%40group.calendar.google.com&ctz=Asia%2FKuala_Lumpur";
 
-// Program Ains (Looker Studio)
-const PROGRAM_AINS_CSV_URL = "/data/users_PERAK.csv";
-
-// Data DELIMa (Excel — kemas kini dengan mengganti fail di public/data)
-const DELIMA_XLSX_URL = "/data/delima-ppd-manjung.xlsx";
 const LAMAN_WEB_SEKOLAH_XLSX_URL = "/data/laman-web-sekolah-bengkel-responses.xlsx";
-/** OPR Amalan Membaca — Manjung sahaja (JSON daripada scripts/build-opr-amalan-membaca-manjung.mjs) */
-const OPR_AMALAN_MEMBACA_JSON_URL = "/data/opr-amalan-membaca-manjung.json";
+
+/** CSV templat topik OSC (public/data/) — dipapar hanya jika `VITE_GOOGLE_SHEET_ID` kosong; salin struktur ke tab Sheet sebenar. */
+const OSC_TOPIK_DEMO_CSV = {
+  integrasi: "data/osc-topik-integrasi-demo.csv",
+  hebahan: "data/osc-topik-hebahan-demo.csv",
+  itm: "data/osc-topik-itm-demo.csv",
+  pembudayaanMembaca: "data/osc-topik-pembudayaan-membaca-demo.csv",
+  pemerkasaan: "data/osc-topik-pemerkasaan-demo.csv",
+};
 const DELIMA_GOOGLE_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1pGLkWr8Vt4kPW7haQ-_AZ-trpptimI-5r038vWbdblk/edit?gid=0#gid=0";
-/** Sasaran rujukan: guru selaras KPI DCS; murid lebih rendah kerana corak penggunaan berbeza (laras jika perlu). */
-const DELIMA_KPI_GURU_PCT = 78;
-const DELIMA_KPI_MURID_PCT = 65;
 
-/** Pasangan lajur % guru / % murid bagi setiap potongan masa (indeks 0 = baris data). */
-const DELIMA_MONTH_DEF = [
-  { label: "Apr", g: 6, m: 7 },
-  { label: "Mei", g: 8, m: 9 },
-  { label: "Jun", g: 10, m: 11 },
-  { label: "Jul", g: 12, m: 13 },
-  { label: "Ogs¹", g: 14, m: 15 },
-  { label: "Ogs²", g: 16, m: 17 },
-  { label: "Okt¹", g: 21, m: 22 },
-  { label: "Okt²", g: 23, m: 24 },
-  { label: "Nov", g: 25, m: 26 },
-  { label: "Dis", g: 27, m: 28 },
-];
+/** Paparan pill sasaran guru/murid DELIMa — matikan kerana garis panduan KPM semasa. Tukar kepada true untuk papar semula. */
+const DELIMA_SHOW_SASARAN_KPI = false;
 
-/** Paparan carta / jadual: langkau Ogs¹ & Okt¹; kekalkan potongan kedua sahaja. */
-const DELIMA_SKIP_CHART_LABELS = new Set(["Ogs¹", "Okt¹"]);
-
-const toNumber = (v) => {
-  const n = Number(String(v ?? "").trim());
-  return Number.isFinite(n) ? n : 0;
-};
-
-const shortenText = (v, maxLen) => {
-  const s = String(v ?? "");
-  if (s.length <= maxLen) return s;
-  if (maxLen <= 3) return s.slice(0, maxLen);
-  return `${s.slice(0, maxLen - 3)}...`;
-};
-
-function DetailsCollapseFooter() {
+/** Modal pegawai: `detailImage` boleh URL Drive (iframe) atau imej terus — sama logik dengan Carta/PKG. */
+function PegawaiProfilePreview({ pegawai }) {
+  if (pegawai.detailUrl) {
+    return (
+      <iframe
+        title={`${pegawai.nama} - personal profile`}
+        src={pegawai.detailUrl}
+        className="h-[70vh] w-full"
+        style={{ border: 0, background: "#0b1220" }}
+        allowFullScreen
+      />
+    );
+  }
+  if (pegawai.detailImage) {
+    const prev = maklumatAsasPreviewMode(pegawai.detailImage);
+    if (prev.kind === "iframe") {
+      return (
+        <iframe
+          title={`${pegawai.nama} - personal profile`}
+          src={prev.src}
+          className="h-[70vh] w-full"
+          style={{ border: 0, background: "#0b1220" }}
+          allowFullScreen
+        />
+      );
+    }
+    return (
+      <img
+        alt={`${pegawai.nama} - personal profile`}
+        src={prev.src}
+        className="h-auto w-full"
+      />
+    );
+  }
   return (
-    <div className="flex justify-center border-t border-cyan-400/10 bg-slate-950/35 px-4 py-3">
-      <button
-        type="button"
-        className="text-xs font-semibold text-cyan-300/90 underline-offset-2 hover:text-cyan-200 hover:underline"
-        onClick={(e) => {
-          const d = e.currentTarget.closest("details");
-          if (d) d.removeAttribute("open");
-        }}
-      >
-        Tutup bahagian
-      </button>
+    <div className="flex h-[70vh] items-center justify-center p-6 text-center text-sm text-slate-300">
+      Belum diset: beri saya pautan embed atau gambar untuk {pegawai.nama}
     </div>
   );
-}
-
-function parseCsvText(csvText) {
-  // CSV is comma-separated, without quoted commas in this dataset.
-  const lines = csvText.replace(/\r/g, "").split("\n").filter(Boolean);
-  if (lines.length < 2) return [];
-
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-
-  const idx = (name) => headers.indexOf(name);
-
-  const iState = idx("state");
-  const iDistrict = idx("district");
-  const iCode = idx("code");
-  const iSchool = idx("school");
-  const iLevel = idx("school level");
-  const iType = idx("school type");
-  const iName = idx("name");
-  const iRejected = idx("rejected");
-  const iApproved = idx("approved");
-
-  const required = [
-    iDistrict,
-    iCode,
-    iSchool,
-    iLevel,
-    iType,
-    iName,
-    iRejected,
-    iApproved,
-  ];
-  if (required.some((x) => x < 0)) return [];
-
-  const keep = [];
-  for (let li = 1; li < lines.length; li++) {
-    const cols = lines[li].split(",");
-    if (cols.length < headers.length) continue;
-
-    const district = cols[iDistrict] ?? "";
-    // Daerah Manjung (district names like "PPD MANJUNG")
-    if (!String(district).toLowerCase().includes("manjung")) continue;
-
-    keep.push({
-      state: iState >= 0 ? cols[iState] : "",
-      district,
-      code: cols[iCode],
-      school: cols[iSchool],
-      schoolLevel: cols[iLevel],
-      schoolType: cols[iType],
-      name: cols[iName],
-      rejected: toNumber(cols[iRejected]),
-      approved: toNumber(cols[iApproved]),
-    });
-  }
-
-  return keep;
-}
-
-function delimaCellNum(v) {
-  const n = Number(String(v ?? "").trim());
-  return Number.isFinite(n) ? n : null;
-}
-
-/**
- * Bilangan kali khidmat/bengkel: setiap segmen dipisah dengan "/" dikira 1.
- * Contoh: "3.3.2025/11.3.25" = 2. Teks satu blok (cth. Ladap … 30.10.2025) = 1.
- */
-function countDelimaBantuSegments(tarikhBantu) {
-  const raw = String(tarikhBantu ?? "").replace(/\r\n/g, " ").trim();
-  if (!raw) return 0;
-  return raw
-    .split("/")
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0).length;
-}
-
-/** Baris data bermula indeks 2 (selepas 2 baris tajuk). Lajur sepadan fail PPD Manjung. */
-function parseDelimaXlsx(arrayBuffer) {
-  const wb = XLSX.read(arrayBuffer, { type: "array" });
-  const sheetName = wb.SheetNames.includes("DATA DELIMA 2025")
-    ? "DATA DELIMA 2025"
-    : wb.SheetNames[0];
-  const sheet = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-  const out = [];
-  for (let i = 2; i < rows.length; i++) {
-    const r = rows[i];
-    if (!Array.isArray(r)) continue;
-    const kod = String(r[1] ?? "").trim();
-    const nama = String(r[2] ?? "").trim();
-    if (!kod || !nama) continue;
-    if (!/^[A-Z]{2,4}\d{3,5}$/i.test(kod)) continue;
-
-    const tovGuru = delimaCellNum(r[3]);
-    const tovMurid = delimaCellNum(r[4]);
-    const tarikhBantu = String(r[5] ?? "")
-      .replace(/\r\n/g, " ")
-      .trim();
-    const bantuKali = countDelimaBantuSegments(tarikhBantu);
-    const bilGuru = delimaCellNum(r[18]);
-    const bilDashboard = delimaCellNum(r[19]);
-    const bilGuruAktif = delimaCellNum(r[20]);
-    const novGuru = delimaCellNum(r[25]);
-    const novMurid = delimaCellNum(r[26]);
-    const disGuru = delimaCellNum(r[27]);
-    const disMurid = delimaCellNum(r[28]);
-
-    let aktivitiPct = null;
-    if (bilGuru != null && bilGuru > 0 && bilGuruAktif != null) {
-      aktivitiPct = (bilGuruAktif / bilGuru) * 100;
-    }
-
-    const monthly = DELIMA_MONTH_DEF.map(({ label, g, m }) => ({
-      label,
-      guru: delimaCellNum(r[g]),
-      murid: delimaCellNum(r[m]),
-    }));
-
-    out.push({
-      kod,
-      nama,
-      tovGuru,
-      tovMurid,
-      tarikhBantu,
-      bantuKali,
-      bilGuru,
-      bilDashboard,
-      bilGuruAktif,
-      novGuru,
-      novMurid,
-      disGuru,
-      disMurid,
-      aktivitiPct,
-      monthly,
-    });
-  }
-  return out;
 }
 
 function normalizeSchoolWebsiteUrl(raw) {
@@ -305,17 +174,21 @@ function mergeLamanWebFeaturedRow(def, excelRow) {
     name: def.fallbackName,
     website: "",
   };
+  const fromData = normalizeSchoolWebsiteUrl(base.website || "");
+  const fallbackUrl = normalizeSchoolWebsiteUrl(def.url);
   return {
     ...base,
     code: base.code?.trim() ? base.code : def.code,
     name: (base.name && String(base.name).trim()) || def.fallbackName,
-    website: normalizeSchoolWebsiteUrl(def.url),
+    website: fromData || fallbackUrl,
   };
 }
 
 function lamanWebRowWithFeaturedWebsiteIfAny(r) {
   const k = normalizeLamanWebSchoolCode(r.code);
-  const o = k ? LAMAN_WEB_FEATURED_URL_BY_CODE[k] : "";
+  if (!k) return r;
+  if (String(r.website ?? "").trim()) return r;
+  const o = LAMAN_WEB_FEATURED_URL_BY_CODE[k];
   return o ? { ...r, website: normalizeSchoolWebsiteUrl(o) } : r;
 }
 
@@ -353,13 +226,6 @@ function fmtPct1(n) {
   return `${n.toFixed(1)}%`;
 }
 
-function meanFinite(nums) {
-  const v = nums.filter((x) => x != null && Number.isFinite(x));
-  if (!v.length) return null;
-  return v.reduce((a, b) => a + b, 0) / v.length;
-}
-
-/** Anak panah perbandingan dalam mata peratus (pp). */
 function DelimaDeltaPp({ before, after, title }) {
   if (before == null || after == null) {
     return <span className="text-slate-500">—</span>;
@@ -380,6 +246,142 @@ function DelimaDeltaPp({ before, after, title }) {
         {d.toFixed(1)} pp
       </span>
     </span>
+  );
+}
+
+/** Ringkasan angka daerah (isi dari Google Sheet key,value) — panel berlapis seperti dashboard Excel. */
+function DelimaSheetInsightBlock({ insight, kpiGuru, kpiMurid }) {
+  if (!insight) return null;
+  const n = insight.schools;
+  const nStr = n != null ? String(Math.round(n)) : "—";
+
+  const hasTiles =
+    insight.schools != null ||
+    insight.bantuSessionsTotal != null ||
+    insight.bantuSchoolsWithRekod != null ||
+    insight.schoolsGuruGteTov != null ||
+    insight.schoolsMuridGteTov != null;
+  const hasDeltas =
+    insight.avgTovGuru != null ||
+    insight.avgDisGuru != null ||
+    insight.avgTovMurid != null ||
+    insight.avgDisMurid != null ||
+    insight.avgNovGuru != null;
+  const hasPills =
+    insight.showKpiGuruPill ||
+    insight.showKpiMuridPill ||
+    insight.avgAktiviti != null;
+
+  return (
+    <div className="space-y-3">
+      {hasTiles ? (
+        <div className="rounded-xl border border-cyan-400/30 bg-slate-950/50 p-3 shadow-[inset_0_1px_0_rgba(34,211,238,0.08)]">
+          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+            {insight.schools != null ? (
+              <div className="rounded-lg border border-cyan-400/20 bg-slate-900/60 px-2 py-1.5">
+                <p className="text-slate-500">Sekolah</p>
+                <p className="text-sm font-semibold text-white">{nStr}</p>
+              </div>
+            ) : null}
+            {insight.bantuSessionsTotal != null || insight.bantuSchoolsWithRekod != null ? (
+              <div className="rounded-lg border border-cyan-400/20 bg-slate-900/60 px-2 py-1.5">
+                <p className="text-slate-500">Khidmat bantu</p>
+                <p className="text-sm font-semibold text-cyan-200">
+                  {insight.bantuSessionsTotal != null
+                    ? `${Math.round(insight.bantuSessionsTotal)} `
+                    : "— "}
+                  <span className="font-normal text-slate-500">kali</span>
+                </p>
+                {insight.bantuSchoolsWithRekod != null ? (
+                  <p className="mt-0.5 text-[10px] text-slate-500">
+                    {Math.round(insight.bantuSchoolsWithRekod)} sekolah ada rekod
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {insight.schoolsGuruGteTov != null || insight.schoolsMuridGteTov != null ? (
+              <div className="col-span-2 rounded-lg border border-cyan-400/20 bg-slate-900/60 px-2 py-1.5 sm:col-span-1">
+                <p className="text-slate-500">Capai ≥ TOV (Dis)</p>
+                <p className="text-sm font-semibold text-white">
+                  G{" "}
+                  {insight.schoolsGuruGteTov != null ? Math.round(insight.schoolsGuruGteTov) : "—"}/
+                  {nStr}{" "}
+                  <span className="text-slate-500">·</span> M{" "}
+                  {insight.schoolsMuridGteTov != null ? Math.round(insight.schoolsMuridGteTov) : "—"}/
+                  {nStr}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {hasDeltas ? (
+        <div className="rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2.5 text-xs">
+          <div className="space-y-1.5">
+            {insight.avgTovGuru != null || insight.avgDisGuru != null ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-slate-400">
+                  Guru: TOV {fmtPct1(insight.avgTovGuru)} → Dis {fmtPct1(insight.avgDisGuru)}
+                </span>
+                <DelimaDeltaPp
+                  before={insight.avgTovGuru}
+                  after={insight.avgDisGuru}
+                  title="Purata daerah: TOV → Disember"
+                />
+              </div>
+            ) : null}
+            {insight.avgTovMurid != null || insight.avgDisMurid != null ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-slate-400">
+                  Murid: TOV {fmtPct1(insight.avgTovMurid)} → Dis {fmtPct1(insight.avgDisMurid)}
+                </span>
+                <DelimaDeltaPp
+                  before={insight.avgTovMurid}
+                  after={insight.avgDisMurid}
+                  title="Purata daerah: TOV → Disember"
+                />
+              </div>
+            ) : null}
+            {insight.avgNovGuru != null || insight.avgDisGuru != null ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-slate-400">
+                  Guru: Nov {fmtPct1(insight.avgNovGuru)} → Dis {fmtPct1(insight.avgDisGuru)}
+                </span>
+                <DelimaDeltaPp
+                  before={insight.avgNovGuru}
+                  after={insight.avgDisGuru}
+                  title="Purata daerah: November → Disember"
+                />
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {hasPills ? (
+        <div className="flex flex-wrap gap-2">
+          {insight.showKpiGuruPill ? (
+            <StatusPill
+              label={`Sasaran Dis guru (${kpiGuru}%): ${insight.kpiGuruOk ? "Capai" : "Belum"}`}
+              tone={insight.kpiGuruOk ? "good" : "warn"}
+            />
+          ) : null}
+          {insight.showKpiMuridPill ? (
+            <StatusPill
+              label={`Sasaran Dis murid (${kpiMurid}%): ${insight.kpiMuridOk ? "Capai" : "Belum"}`}
+              tone={insight.kpiMuridOk ? "good" : "warn"}
+            />
+          ) : null}
+          {insight.avgAktiviti != null ? (
+            <StatusPill
+              label={`Guru aktif (bil): ${fmtPct1(insight.avgAktiviti)}`}
+              tone="good"
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -549,196 +551,6 @@ function DelimaMonthAvgTable({ seriesDisplay, maxHeightClass = "max-h-[168px]", 
   );
 }
 
-// Epelaporan (Canva) — `/view` + `?embed` untuk iframe
-/** Bahan Rujukan — Epelaporan 2022 */
-const EPelaporan_2022_LINK =
-  "https://www.canva.com/design/DAE5EDf_XPY/y4cvQai_KnNMwM2ModqGRA/view";
-/** Bahan Rujukan — Epelaporan 2023 */
-const EPelaporan_2023_LINK =
-  "https://www.canva.com/design/DAHFBKPyUho/vDbVidnAHom0TJcNXIl5Sg/view";
-/** Kad embed — Epelaporan 2024 */
-const EPelaporan_2024_LINK =
-  "https://www.canva.com/design/DAHFAwfv5qI/kDTtol21C9NoGT8X7TL8dw/view";
-const EPelaporan_2025_LINK =
-  "https://www.canva.com/design/DAGgurDIiVU/tQr9dAKI1fjuF7iyS73LMQ/view";
-
-/** Epelaporan Canva mengikut tahun + pelaporan tambahan (Takwim Looker) — untuk Bahan Sokongan */
-const EPELAPORAN_BY_YEAR = [
-  { year: 2022, viewUrl: EPelaporan_2022_LINK },
-  { year: 2023, viewUrl: EPelaporan_2023_LINK },
-  { year: 2024, viewUrl: EPelaporan_2024_LINK },
-  { year: 2025, viewUrl: EPelaporan_2025_LINK },
-];
-
-/** Buku Pengurusan USTP — Canva mengikut tahun (tertib: 2023 → 2026) */
-const BOOK_PENGURUSAN_AUTHOR = "Rujhan Alwi";
-const BOOK_PENGURUSAN_BY_YEAR = [
-  {
-    year: 2023,
-    viewUrl:
-      "https://www.canva.com/design/DAFWv3QoB9g/SiacIkkrSFJG7FuO65g-Jg/view",
-  },
-  {
-    year: 2024,
-    viewUrl:
-      "https://www.canva.com/design/DAF28MMwqT4/dV65v3f2G1G9V6A_KXM5Bg/view",
-  },
-  {
-    year: 2025,
-    viewUrl:
-      "https://www.canva.com/design/DAGZuhOHzIM/kiiF86Fawa-ChTVvuH7DaQ/view",
-  },
-  {
-    year: 2026,
-    viewUrl:
-      "https://www.canva.com/design/DAHFBMI56W8/rdm4z_hoorUd10XE3HgQfA/view",
-  },
-];
-
-/** Penyebaran dasar — MJ3PD & JKPA (Canva), susunan paparan */
-const PENYEBARAN_DASAR_CANVA_CARDS = [
-  {
-    key: "mj3pd-2025",
-    title: "MJ3PD 2025",
-    blurb: "Bahan penyebaran dasar (Canva).",
-    viewUrl:
-      "https://www.canva.com/design/DAGjdXwaoXw/eudwsuvBJEx7J7D-5zwGrQ/view",
-  },
-  {
-    key: "jkpa-2026",
-    title: "JKPA 2026",
-    blurb: "Bahan dasar JKPA (Canva).",
-    viewUrl:
-      "https://www.canva.com/design/DAG-vuv7xWw/ZSoPv8yyr_7gMStIqeAgjA/view",
-  },
-  {
-    key: "jkpa-2025",
-    title: "JKPA 2025",
-    blurb: "Bahan dasar JKPA (Canva).",
-    viewUrl:
-      "https://www.canva.com/design/DAGf7B_YivM/FDYNAE-lIPOuUKLrg9qH1g/view",
-  },
-  {
-    key: "jkpa-2024",
-    title: "JKPA 2024",
-    blurb: "Bahan dasar JKPA (Canva).",
-    viewUrl:
-      "https://www.canva.com/design/DAFrG17dkI0/s_JU059YoGnI6UMs5q56Vw/view",
-  },
-];
-
-/** Penyebaran dasar — pameran PDF (Google Drive) */
-const PENYEBARAN_DASAR_DRIVE_PDF_CARDS = [
-  {
-    key: "pameran-hari-guru-kebangsaan-2025",
-    title: "Pameran Gerakan Massa Hari Guru Kebangsaan 2025",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1oUjyXVFSqfwhOrrr6G-GWDYVctVAtbwg/view?usp=drive_link",
-  },
-  {
-    key: "pameran-coe-readigital-negeri-perak",
-    title:
-      "Pameran Peralatan COE Sempena Karnival R.E.A.Digital Peringkat Negeri Perak",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1H6kg2qwmdsN3u8ufDa9LQwtf736ecqvO/view?usp=drive_link",
-  },
-  {
-    key: "pameran-townhall-zon-tengah-ipoh-2025",
-    title:
-      "Pameran Sempena Townhall Pemantapan Pendidikan Digital Pegawai Perkhidmatan Pendidikan Kementerian Pendidikan Malaysia Zon Tengah (Ipoh) Tahun 2025",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1aKAwx6lSLTPD3BdH6gKtuLZ7zhxiH43c/view?usp=drive_link",
-  },
-  {
-    key: "contoh-penyebaran-dasar-kpm-hebahan-coe",
-    title:
-      "Contoh penyebaran dasar KPM melalui hebahan peralatan COE yang terkini",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/14PqERSatwgbK30vbSfiRjfXUlFZItWpL/view?usp=drive_link",
-  },
-];
-
-/** Google Drive — PDF surat pemerkasaan DELIMa */
-const SURAT_PEMERKASAAN_DELIMA_2023_2024_URL =
-  "https://drive.google.com/file/d/1lyQd8IOz4lmgAFo9Lz2ZK9bKDZQNPy4F/view?usp=sharing";
-const SURAT_PEMERKASAAN_DELIMA_2025_2026_URL =
-  "https://drive.google.com/file/d/196YTk8wLq0qvdfSRVIFLxeQ_wLhTjjC-/view?usp=sharing";
-/** Surat arahan khidmat sokongan — ARAHAN TUGAS USTP 2026 (PDF Drive) */
-const SURAT_ARAHAN_KHIDMAT_SOKONGAN_USTP_2026_URL =
-  "https://drive.google.com/file/d/1Ycx8VFxQryk0Gt-XR2mKhRLEugAdpQkC/view?usp=sharing";
-
-/** Kad surat dalam Bahan Sokongan — Surat punca kuasa */
-const SURAT_PUNCA_KUASA_CARDS = [
-  {
-    key: "delima-2324",
-    title: "Surat Pemerkasaan DELIMa 2023–2024",
-    blurb: "Punca kuasa pemerkasaan DELIMa bagi tempoh 2023–2024.",
-    viewUrl: SURAT_PEMERKASAAN_DELIMA_2023_2024_URL,
-  },
-  {
-    key: "delima-2526",
-    title: "Surat Pemerkasaan DELIMa 2025–2026",
-    blurb: "Punca kuasa pemerkasaan DELIMa bagi tempoh 2025–2026.",
-    viewUrl: SURAT_PEMERKASAAN_DELIMA_2025_2026_URL,
-  },
-  {
-    key: "arahan-ustp-2026",
-    title: "Arahan Tugas USTP 2026",
-    blurb: "Surat arahan khidmat sokongan (PDF).",
-    viewUrl: SURAT_ARAHAN_KHIDMAT_SOKONGAN_USTP_2026_URL,
-  },
-];
-
-/** Sandaran jika sheet tiada / ralat — sama struktur seperti Google Sheet (lihat public/data/osc-sheet-template.csv) */
-const CONTOH_BAHAN_DELIMA_FALLBACK = [
-  {
-    key: "jadual-delima-smk-raja-shahriman",
-    title: "JADUAL PENGGUNAAN DELIMA GURU SMK RAJA SHAHRIMAN",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1rIkmt3ym-RtaLSS0x1PWkAKKBt7sTZ7r/view?usp=drive_link",
-  },
-  {
-    key: "contoh-gc-smk-raja-shahriman",
-    title: "Contoh GC SMK RAJA SHAHRIMAN",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1lPacjoL4whMEZzttJcN0ZbjNc3-oGm26/view?usp=drive_link",
-  },
-  {
-    key: "jadual-ict-delima-sjkt-kg-columbia",
-    title: "Jadual Penggunaan ICT & DELIMa SJKT KG COLUMBIA",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1GjYLq3F7W7KR-AZG1LCuR4hn9UWkACow/view?usp=drive_link",
-  },
-  {
-    key: "jadual-delima-sjkc-pei-ching",
-    title: "Jadual DELIMa SJKC Pei Ching",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1HsEmsqsuPmYlLdgEvBqTcakCIhQVMFwE/view?usp=drive_link",
-  },
-  {
-    key: "opr-delima-sjkt-ladang-cashwood",
-    title: "OPR DELIMa SJKT LADANG CASHWOOD",
-    blurb: "PDF (Google Drive)",
-    viewUrl:
-      "https://drive.google.com/file/d/1cbZI8GH_nsXABQe6wNpu-5SLQPj41QLV/view?usp=drive_link",
-  },
-];
-
-const PENCAPAIAN_USTP_2025_URL =
-  "https://www.canva.com/design/DAGxVjtQuhg/FTA-gZELFpsmrLn3HyhRnQ/view";
-const PENCAPAIAN_USTP_2025_EMBED = `${PENCAPAIAN_USTP_2025_URL}?embed`;
-const TIKTOK_USTP_MANJUNG_URL =
-  "https://www.tiktok.com/@ustpmanjung1?is_from_webapp=1&sender_device=pc";
-const YOUTUBE_USTP_MANJUNG_URL =
-  "https://www.youtube.com/channel/UC00YHEDSN_X5xVGqV9b4rmw";
 /** Program Pemerkasaan Bacaan Murid — Bicara Buku (YouTube Live / rakaman) */
 const BICARA_BUKU_YOUTUBE_WATCH_URL =
   "https://www.youtube.com/live/XmP3d3XwdC4";
@@ -753,64 +565,6 @@ const PEMERKASAAN_VIDEO_KREATIF_IMPAK_TVPSS_PDF_URL =
 /** Program Pemerkasaan Bacaan Murid — Pembaca Bestari (Google Docs) */
 const PEMERKASAAN_PEMBACA_BESTARI_PENILAIAN_DOC_URL =
   "https://docs.google.com/document/d/1FDPdQjRbPcv7dA-drIpWw0gghPu3OG7xSp2DRwiH8TU/edit?tab=t.0";
-/** Pratontak skrin — fail dalam `public/` */
-const VIDEO_CARD_TIKTOK_IMAGE = `${import.meta.env.BASE_URL}video-card-tiktok.png`;
-const VIDEO_CARD_YOUTUBE_IMAGE = `${import.meta.env.BASE_URL}video-card-youtube.png`;
-const PDP_DIGITAL_CARD_RUANG_ILMU_IMAGE = `${import.meta.env.BASE_URL}pdp-digital-card-ruang-ilmu.png`;
-const RUANG_ILMU_RESOURCE_URL = "https://ruangilmu.moe-dl.edu.my/resource";
-
-/** Kad dalam Bahan Sokongan — Bahan pdp digital */
-const BAHAN_PDP_DIGITAL_CARDS = [
-  {
-    key: "tiktok",
-    href: TIKTOK_USTP_MANJUNG_URL,
-    platform: "TikTok",
-    title: "USTP PPD Manjung",
-    subtitle: "@ustpmanjung1 · Centre Of Excellent",
-    cta: "Buka TikTok",
-    previewSrc: VIDEO_CARD_TIKTOK_IMAGE,
-    previewAlt: "Pratontak TikTok USTP PPD Manjung",
-    ringClass: "border-rose-400/25 hover:border-rose-400/50",
-    badgeClass: "bg-rose-500/90 text-white",
-  },
-  {
-    key: "youtube",
-    href: YOUTUBE_USTP_MANJUNG_URL,
-    platform: "YouTube",
-    title: "USTP PPD Manjung",
-    subtitle: "Saluran rasmi · video program & ceramah",
-    cta: "Tonton di YouTube",
-    previewSrc: VIDEO_CARD_YOUTUBE_IMAGE,
-    previewAlt: "Pratontak YouTube USTP PPD Manjung",
-    ringClass: "border-red-500/30 hover:border-red-400/55",
-    badgeClass: "bg-red-600/95 text-white",
-  },
-  {
-    key: "ruang-ilmu",
-    href: RUANG_ILMU_RESOURCE_URL,
-    platform: "Ruang Ilmu",
-    title: "Bank sumber DELIMa",
-    subtitle: "Panduan, bank soalan & bahan mengikut subjek · log masuk ID DELIMa",
-    cta: "Buka Ruang Ilmu",
-    previewSrc: PDP_DIGITAL_CARD_RUANG_ILMU_IMAGE,
-    previewAlt: "Pratontak laman Ruang Ilmu DELIMa",
-    ringClass: "border-sky-400/35 hover:border-sky-400/60",
-    badgeClass: "bg-sky-600/95 text-white",
-  },
-];
-const KAD_PENGHARGAAN_PPD_MANJUNG_URL =
-  "https://www.canva.com/design/DAGa60sQAjg/bmiRnetB9hWhfU20s6eOkQ/watch";
-/** Untuk iframe — `/view?embed` (pautan penuh kekal `/watch`) */
-const KAD_PENGHARGAAN_EMBED = `${KAD_PENGHARGAAN_PPD_MANJUNG_URL.replace(/\/watch\/?$/, "/view")}?embed`;
-const SUCCESS_STORY_USTP_URL =
-  "https://www.canva.com/design/DAGl_Rzw6so/PWBQvkwQprFOIQ12LZ1TZQ/view";
-const SUCCESS_STORY_USTP_EMBED = `${SUCCESS_STORY_USTP_URL}?embed`;
-const MAJLIS_APRESIASI_DIGITAL_URL =
-  "https://www.canva.com/design/DAG3I0mucKY/ehUSnXhpz06UxXWmTN8-wA/view";
-const MAJLIS_APRESIASI_DIGITAL_EMBED = canvaViewEmbedUrl(MAJLIS_APRESIASI_DIGITAL_URL);
-const SLAID_MAJLIS_APRESIASI_URL =
-  "https://www.canva.com/design/DAG5B4DtRe8/nE9Trwg7IRWEFamAGjyRMQ/view";
-const SLAID_MAJLIS_APRESIASI_EMBED = canvaViewEmbedUrl(SLAID_MAJLIS_APRESIASI_URL);
 const KERTAS_KERJA_EDUSPARK_COE_ROADSHOW_URL =
   "https://www.canva.com/design/DAG0hWYthb4/bzP48XBfMSZMxXUqsL_g3g/view";
 /** Kertas kerja program — Bengkel Digital 2025 (PDF, Google Drive) */
@@ -963,7 +717,7 @@ const pegawaiData = [
     telefon: "019-9669812 / 05-692 7814",
     // Masukkan salah satu:
     // 1) detailUrl: link (boleh iframe) ke halaman Canva/Looker/etc
-    // 2) detailImage: link atau path gambar (PNG/JPG) untuk dipaparkan dalam modal
+    // 2) detailImage: path imej (/pegawai/...) atau pautan Google Drive (view) — pratontoh dalam modal
     detailUrl: "",
     detailImage: "/pegawai/SydMuhammadRujhan.png",
   },
@@ -1015,8 +769,10 @@ const PENSIJILAN_BY_LOCATION = [
 ];
 
 /** Ringkasan statistik pada kad (selari data dalam infografik) */
-function PensijilanDigitalSummary() {
-  const locSum = PENSIJILAN_BY_LOCATION.reduce((a, [, n]) => a + n, 0);
+function PensijilanDigitalSummary({ data } = {}) {
+  const locPairs = data?.locations ?? PENSIJILAN_BY_LOCATION;
+  const schoolPairs = data?.schools ?? PENSIJILAN_BY_SCHOOL;
+  const locSum = locPairs.reduce((a, [, n]) => a + n, 0);
   return (
     <div className="mt-4 space-y-3 rounded-xl border border-cyan-400/15 bg-slate-950/40 p-3 text-xs text-slate-300">
       <div>
@@ -1024,7 +780,7 @@ function PensijilanDigitalSummary() {
           Jumlah mengikut lokasi
         </p>
         <div className="flex flex-wrap gap-2">
-          {PENSIJILAN_BY_LOCATION.map(([label, n]) => (
+          {locPairs.map(([label, n]) => (
             <span
               key={label}
               className="rounded-lg border border-cyan-400/20 bg-slate-950/60 px-2 py-1 tabular-nums text-slate-200"
@@ -1046,7 +802,7 @@ function PensijilanDigitalSummary() {
         <div className="max-h-[140px] overflow-y-auto rounded-lg border border-cyan-400/10 bg-slate-950/30">
           <table className="w-full text-left text-[10px]">
             <tbody>
-              {PENSIJILAN_BY_SCHOOL.map(([label, n]) => (
+              {schoolPairs.map(([label, n]) => (
                 <tr key={label} className="border-t border-cyan-400/10">
                   <td className="px-2 py-1 text-slate-400">{label}</td>
                   <td className="px-2 py-1 text-right tabular-nums font-medium text-slate-100">
@@ -1087,6 +843,7 @@ function PensijilanDigitalSummary() {
     </div>
   );
 }
+
 
 /** Garisan KPI kebangsaan & snapshot OPTIK 2 / AI Tools dalam DELIMa (data slaid) */
 const AI_TOOLS_KPI_KEBANGSAAN = 55;
@@ -1302,10 +1059,28 @@ function AiToolsOptikAreaChart({ snapshot, pergerakan, kpiPct }) {
   );
 }
 
-function AiToolsDelimaSummary() {
-  const k = AI_TOOLS_SNAPSHOT_OPTIK;
-  const p = AI_TOOLS_PERGERAKAN;
-  const line = AI_TOOLS_KPI_KEBANGSAAN;
+function AiToolsDelimaSummary({ sheet } = {}) {
+  const k = sheet
+    ? {
+        asAt: sheet.asAt,
+        selesaiPct: sheet.selesaiPct,
+        selesaiBil: sheet.selesaiBil,
+        belumPct: sheet.belumPct,
+        belumBil: sheet.belumBil,
+      }
+    : AI_TOOLS_SNAPSHOT_OPTIK;
+  const p = sheet
+    ? {
+        tov2024: sheet.tov2024,
+        ar1Julai: sheet.ar1Julai,
+        ar2Okt: sheet.ar2Okt,
+      }
+    : AI_TOOLS_PERGERAKAN;
+  const line = sheet ? sheet.kpiKebangsaan : AI_TOOLS_KPI_KEBANGSAAN;
+
+  const footerText =
+    sheet?.footerNote ||
+    `AR2 (Okt) melebihi sasaran ${line}% berbanding AR1; titik akhir ialah peratus selesai snapshot ${k.asAt} (bukan skala sama dengan TOV/AR).`;
 
   return (
     <div className="mt-3 flex flex-1 flex-col space-y-4 text-xs text-slate-300">
@@ -1391,14 +1166,12 @@ function AiToolsDelimaSummary() {
             Trend capaian
           </span>
         </div>
-        <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-          AR2 (Okt) melebihi sasaran {line}% berbanding AR1; titik akhir ialah peratus selesai snapshot {k.asAt}
-          (bukan skala sama dengan TOV/AR).
-        </p>
+        <p className="mt-2 text-[10px] leading-relaxed text-slate-500">{footerText}</p>
       </div>
     </div>
   );
 }
+
 
 function StatusPill({ label, tone }) {
   const map = {
@@ -1414,24 +1187,23 @@ function StatusPill({ label, tone }) {
 }
 
 /** Carta garis: trend daerah TOV → capai 2025 + garisan sasaran KPI kebangsaan. */
-function DcsKpiLineChart() {
+function DcsKpiLineChart({
+  tov = DCS_TOV_2024_DAERAH,
+  kpi = DCS_KPI_2025_KEBANGSAAN,
+  capai = DCS_CAPAI_2025_DAERAH,
+  yMin = 58,
+  yMax = 82,
+} = {}) {
   const W = 400;
   const H = 168;
   const pad = { l: 40, r: 28, t: 18, b: 44 };
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
-  const yMin = 58;
-  const yMax = 82;
-  const tov = DCS_TOV_2024_DAERAH;
-  const kpi = DCS_KPI_2025_KEBANGSAAN;
-  const capai = DCS_CAPAI_2025_DAERAH;
-
   const yAt = (pct) =>
     pad.t + (1 - (pct - yMin) / (yMax - yMin)) * innerH;
 
   const x0 = pad.l;
   const x1 = pad.l + innerW;
-  /** Teks "Capai 2025" di bawah — ancar tengah sedikit ke kiri supaya tidak terpotong di tepi SVG */
   const xCapaiLabel = x1 - 22;
   const y0 = yAt(tov);
   const y1 = yAt(capai);
@@ -1554,6 +1326,7 @@ function DcsKpiLineChart() {
     </svg>
   );
 }
+
 
 /** Carta ringkas Program Ains: nisbah Approved/Rejected + approved mengikut jenis sekolah. */
 function ProgramAinsCharts({ stats, loading, error }) {
@@ -1736,32 +1509,32 @@ export default function App() {
   const [isPensijilanDigitalImageOpen, setIsPensijilanDigitalImageOpen] =
     useState(false);
 
-  // Program Ains: CSV-based stats (since Looker iframe may be blocked)
-  const [programRows, setProgramRows] = useState([]);
-  const [programLoading, setProgramLoading] = useState(true);
-  const [programError, setProgramError] = useState("");
-  const [programSearch, setProgramSearch] = useState("");
-  const [programModalOpen, setProgramModalOpen] = useState(false);
-  const [programModalType, setProgramModalType] = useState("ALL"); // ALL | SK | SJKC | SJKT
-  const [programModalStatus, setProgramModalStatus] = useState("ALL"); // ALL | APPROVED | REJECTED
+  const [delimaAn, setDelimaAn] = useState(null);
+  const [delimaAnLoading, setDelimaAnLoading] = useState(true);
+  const [delimaAnError, setDelimaAnError] = useState("");
 
-  const [delimaRows, setDelimaRows] = useState([]);
-  const [delimaLoading, setDelimaLoading] = useState(true);
-  const [delimaError, setDelimaError] = useState("");
-  const [delimaModalOpen, setDelimaModalOpen] = useState(false);
-  const [delimaSearch, setDelimaSearch] = useState("");
+  const [dcsAn, setDcsAn] = useState(null);
+  const [_dcsAnLoading, setDcsAnLoading] = useState(true);
+  const [dcsAnError, setDcsAnError] = useState("");
+
+  const [ainsAn, setAinsAn] = useState(null);
+  const [ainsLoading, setAinsLoading] = useState(true);
+  const [ainsError, setAinsError] = useState("");
+
+  const [pensijilanAn, setPensijilanAn] = useState(null);
+  const [_pensijilanAnLoading, setPensijilanAnLoading] = useState(true);
+  const [pensijilanAnError, setPensijilanAnError] = useState("");
+
+  const [optikAn, setOptikAn] = useState(null);
+  const [optikLoading, setOptikLoading] = useState(true);
+  const [optikError, setOptikError] = useState("");
 
   const [lamanWebRows, setLamanWebRows] = useState([]);
   const [lamanWebLoading, setLamanWebLoading] = useState(true);
   const [lamanWebError, setLamanWebError] = useState("");
   const [lamanWebSearch, setLamanWebSearch] = useState("");
-
-  const [oprMembaca, setOprMembaca] = useState(null);
-  const [oprMembacaLoading, setOprMembacaLoading] = useState(true);
-  const [oprMembacaError, setOprMembacaError] = useState("");
-  const [oprMembacaSearch, setOprMembacaSearch] = useState("");
-  const [oprMembacaDimensi, setOprMembacaDimensi] = useState("ALL");
-  const [oprMembacaStatus, setOprMembacaStatus] = useState("ALL");
+  /** Baris tambahan / kemas kini URL daripada tab Google Sheet (`VITE_OSC_GID_LAMAN_WEB_SEKOLAH`). */
+  const [lamanWebSheetRows, setLamanWebSheetRows] = useState([]);
 
   // Design mode:
   // - "dark": current version (深色背景)
@@ -1769,38 +1542,136 @@ export default function App() {
   // - "neonDark": 深色背景 + 霓虹网格（第三个选项）
   const [designMode, setDesignMode] = useState("dark");
 
+  const [maklumatAsasConfig, setMaklumatAsasConfig] = useState({});
+  /** null = guna `pegawaiData`; array = dari Sheet (boleh kosong) */
+  const [maklumatAsasPegawaiOverride, setMaklumatAsasPegawaiOverride] =
+    useState(null);
+  const [maklumatAsasLoading, setMaklumatAsasLoading] = useState(true);
+  const [maklumatAsasError, setMaklumatAsasError] = useState("");
+
+  const maklumatAsasDisplay = useMemo(() => {
+    const c = maklumatAsasConfig;
+    const val = (key, fallback) => {
+      const v = c[key];
+      const t = v != null ? String(v).trim() : "";
+      return t || fallback;
+    };
+    const cartaImage = val("carta_image_url", CARTA_ORGANISASI_IMG);
+    const pkgImage = val("pkg_image_url", MAKLUMAT_PKG_COE_IMG);
+    const takwimEmbed = val("takwim_embed_url", USTP_CALENDAR_EMBED);
+    return {
+      cartaImage,
+      cartaPreview: maklumatAsasPreviewMode(cartaImage),
+      cartaFull: val("carta_full_url", cartaImage),
+      cartaTitle: val("carta_title", "Carta Organisasi"),
+      cartaBlurb: val(
+        "carta_blurb",
+        "Organisasi USTP PPD Manjung — hierarki PPD, PKG dan COE.",
+      ),
+      pkgImage,
+      pkgPreview: maklumatAsasPreviewMode(pkgImage),
+      pkgFull: val("pkg_full_url", pkgImage),
+      pkgTitle: val("pkg_title", "Maklumat PKG"),
+      pkgBlurb: val(
+        "pkg_blurb",
+        "Maklumat COE Daerah Manjung (AQA1001–AQA1005) — kemudahan & hubungi.",
+      ),
+      takwimEmbed,
+      takwimFull: val("takwim_full_url", takwimEmbed),
+      takwimTitle: val("takwim_title", "Takwim"),
+    };
+  }, [maklumatAsasConfig]);
+
   const filteredPegawai = useMemo(() => {
+    const pegawaiList =
+      maklumatAsasPegawaiOverride !== null
+        ? maklumatAsasPegawaiOverride
+        : pegawaiData;
     const k = keyword.toLowerCase().trim();
-    if (!k) return pegawaiData;
-    return pegawaiData.filter(
+    if (!k) return pegawaiList;
+    return pegawaiList.filter(
       (p) =>
         p.nama.toLowerCase().includes(k) ||
         p.jawatan.toLowerCase().includes(k) ||
-        p.telefon.includes(k)
+        p.telefon.includes(k),
     );
-  }, [keyword]);
+  }, [keyword, maklumatAsasPegawaiOverride]);
 
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    const gid = (k) => String(import.meta.env[k] ?? "").trim();
+
+    const loadOne = async ({
+      demoPath,
+      gidKey,
+      parse,
+      setData,
+      setLoading,
+      setError,
+    }) => {
       try {
-        setProgramLoading(true);
-        setProgramError("");
-        const res = await fetch(PROGRAM_AINS_CSV_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        const parsed = parseCsvText(text);
+        setLoading(true);
+        setError("");
+        const text = await fetchAnalisisCsvText({
+          gid: gid(gidKey),
+          demoPath,
+        });
         if (cancelled) return;
-        setProgramRows(parsed);
-      } catch {
+        setData(parse(text));
+      } catch (e) {
         if (cancelled) return;
-        setProgramError("Gagal memuatkan data CSV Program Ains.");
-        setProgramRows([]);
+        setError(
+          e instanceof Error ? e.message : "Gagal memuatkan data analisis.",
+        );
+        setData(null);
       } finally {
-        if (!cancelled) setProgramLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    load();
+
+    void Promise.all([
+      loadOne({
+        demoPath: "data/analisis-delima-demo.csv",
+        gidKey: "VITE_ANALISIS_GID_DELIMA",
+        parse: parseDelimaAnalisisCsv,
+        setData: setDelimaAn,
+        setLoading: setDelimaAnLoading,
+        setError: setDelimaAnError,
+      }),
+      loadOne({
+        demoPath: "data/analisis-dcs-demo.csv",
+        gidKey: "VITE_ANALISIS_GID_DCS",
+        parse: parseDcsAnalisisCsv,
+        setData: setDcsAn,
+        setLoading: setDcsAnLoading,
+        setError: setDcsAnError,
+      }),
+      loadOne({
+        demoPath: "data/analisis-ains-demo.csv",
+        gidKey: "VITE_ANALISIS_GID_AINS",
+        parse: parseAinsAnalisisCsv,
+        setData: setAinsAn,
+        setLoading: setAinsLoading,
+        setError: setAinsError,
+      }),
+      loadOne({
+        demoPath: "data/analisis-pensijilan-demo.csv",
+        gidKey: "VITE_ANALISIS_GID_PENSIJILAN",
+        parse: parsePensijilanAnalisisCsv,
+        setData: setPensijilanAn,
+        setLoading: setPensijilanAnLoading,
+        setError: setPensijilanAnError,
+      }),
+      loadOne({
+        demoPath: "data/analisis-optik-demo.csv",
+        gidKey: "VITE_ANALISIS_GID_OPTIK",
+        parse: parseOptikAnalisisCsv,
+        setData: setOptikAn,
+        setLoading: setOptikLoading,
+        setError: setOptikError,
+      }),
+    ]);
+
     return () => {
       cancelled = true;
     };
@@ -1810,23 +1681,28 @@ export default function App() {
     let cancelled = false;
     const load = async () => {
       try {
-        setDelimaLoading(true);
-        setDelimaError("");
-        const res = await fetch(DELIMA_XLSX_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const buf = await res.arrayBuffer();
-        const parsed = parseDelimaXlsx(buf);
+        setMaklumatAsasLoading(true);
+        setMaklumatAsasError("");
+        const text = await fetchAnalisisCsvText({
+          gid: String(import.meta.env.VITE_MAKLUMAT_ASAS_GID ?? "").trim(),
+          demoPath: "data/maklumat-asas-demo.csv",
+        });
         if (cancelled) return;
-        setDelimaRows(parsed);
-      } catch {
+        const { config, pegawaiRows } = parseMaklumatAsasCsv(text);
+        setMaklumatAsasConfig(config);
+        setMaklumatAsasPegawaiOverride(pegawaiRows);
+      } catch (e) {
         if (cancelled) return;
-        setDelimaError("Gagal memuatkan fail Excel DELIMa.");
-        setDelimaRows([]);
+        setMaklumatAsasError(
+          e instanceof Error ? e.message : "Gagal memuatkan Maklumat Asas.",
+        );
+        setMaklumatAsasConfig({});
+        setMaklumatAsasPegawaiOverride(null);
       } finally {
-        if (!cancelled) setDelimaLoading(false);
+        if (!cancelled) setMaklumatAsasLoading(false);
       }
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
@@ -1860,87 +1736,121 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    const gid = String(import.meta.env.VITE_OSC_GID_LAMAN_WEB_SEKOLAH ?? "").trim();
+    const id = import.meta.env.VITE_GOOGLE_SHEET_ID;
+
     const load = async () => {
       try {
-        setOprMembacaLoading(true);
-        setOprMembacaError("");
-        const res = await fetch(OPR_AMALAN_MEMBACA_JSON_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!data || !Array.isArray(data.items)) {
-          throw new Error("Format JSON tidak sah.");
+        let text;
+        if (id && gid) {
+          text = await fetchAnalisisCsvText({ gid });
+        } else if (!id) {
+          text = await fetchAnalisisCsvText({
+            demoPath: "data/laman-web-sekolah-sheet-demo.csv",
+          });
+        } else {
+          if (!cancelled) setLamanWebSheetRows([]);
+          return;
         }
         if (cancelled) return;
-        setOprMembaca(data);
+        setLamanWebSheetRows(parseLamanWebSekolahSheetCsv(text));
       } catch {
-        if (cancelled) return;
-        setOprMembacaError("Gagal memuatkan rekod OPR Amalan Membaca (Manjung).");
-        setOprMembaca(null);
-      } finally {
-        if (!cancelled) setOprMembacaLoading(false);
+        if (!cancelled) setLamanWebSheetRows([]);
       }
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const programVisibleRows = useMemo(() => {
-    const q = programSearch.toLowerCase().trim();
-    if (!q) return programRows;
-    return programRows.filter((r) => {
-      const hay = `${r.name} ${r.school} ${r.code}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [programRows, programSearch]);
-
-  const programModalRows = useMemo(() => {
-    let rows = programVisibleRows;
-
-    if (programModalType !== "ALL") {
-      const t = programModalType.toUpperCase().trim();
-      rows = rows.filter(
-        (r) => String(r.schoolType ?? "").toUpperCase().trim() === t
-      );
+  const ainsStats = useMemo(() => {
+    if (!ainsAn) {
+      return {
+        approved: 0,
+        rejected: 0,
+        skApproved: 0,
+        sjkcApproved: 0,
+        sjktApproved: 0,
+      };
     }
-
-    if (programModalStatus === "APPROVED") {
-      rows = rows.filter((r) => toNumber(r.approved) > 0);
-    } else if (programModalStatus === "REJECTED") {
-      rows = rows.filter((r) => toNumber(r.rejected) > 0);
-    }
-
-    return rows;
-  }, [programVisibleRows, programModalStatus, programModalType]);
-
-  const programStats = useMemo(() => {
-    const rows = programRows;
-    const approved = rows.reduce((acc, r) => acc + toNumber(r.approved), 0);
-    const rejected = rows.reduce((acc, r) => acc + toNumber(r.rejected), 0);
-
-    const sumApprovedByType = (t) =>
-      rows.reduce((acc, r) => {
-        const st = String(r.schoolType ?? "").toUpperCase().trim();
-        return st === t ? acc + toNumber(r.approved) : acc;
-      }, 0);
-    const skApproved = sumApprovedByType("SK");
-    const sjkcApproved = sumApprovedByType("SJKC");
-    const sjktApproved = sumApprovedByType("SJKT");
-
     return {
-      approved,
-      rejected,
-      skApproved,
-      sjkcApproved,
-      sjktApproved,
+      approved: ainsAn.approved,
+      rejected: ainsAn.rejected,
+      skApproved: ainsAn.skApproved,
+      sjkcApproved: ainsAn.sjkcApproved,
+      sjktApproved: ainsAn.sjktApproved,
     };
-  }, [programRows]);
+  }, [ainsAn]);
+
+  const dcsChart = useMemo(() => {
+    if (!dcsAn) {
+      return {
+        tov: DCS_TOV_2024_DAERAH,
+        kpi: DCS_KPI_2025_KEBANGSAAN,
+        capai: DCS_CAPAI_2025_DAERAH,
+        yMin: 58,
+        yMax: 82,
+      };
+    }
+    return {
+      tov: dcsAn.tov,
+      kpi: dcsAn.kpi,
+      capai: dcsAn.capai,
+      yMin: dcsAn.yMin,
+      yMax: dcsAn.yMax,
+    };
+  }, [dcsAn]);
+
+  const lamanWebEffectiveRows = useMemo(() => {
+    const byCode = new Map();
+    for (const r of lamanWebRows) {
+      const k = normalizeLamanWebSchoolCode(r.code);
+      if (k) {
+        byCode.set(k, {
+          code: r.code,
+          name: r.name,
+          website: r.website,
+        });
+      }
+    }
+    const orphans = lamanWebRows.filter((r) => !normalizeLamanWebSchoolCode(r.code));
+
+    for (const r of lamanWebSheetRows) {
+      const k = normalizeLamanWebSchoolCode(r.code);
+      if (!k) continue;
+      const website = normalizeSchoolWebsiteUrl(r.website || "");
+      const nm = String(r.name ?? "").trim();
+      const ex = byCode.get(k);
+      if (ex) {
+        byCode.set(k, {
+          code: ex.code,
+          name: nm || ex.name,
+          website: website || ex.website,
+        });
+      } else {
+        byCode.set(k, {
+          code: String(r.code ?? "").trim() || k,
+          name: nm || "—",
+          website,
+        });
+      }
+    }
+
+    const merged = [...byCode.values()].sort((a, b) =>
+      normalizeLamanWebSchoolCode(a.code).localeCompare(
+        normalizeLamanWebSchoolCode(b.code),
+        "ms",
+        { sensitivity: "base" },
+      ),
+    );
+    return [...merged, ...orphans];
+  }, [lamanWebRows, lamanWebSheetRows]);
 
   const lamanWebVisibleRows = useMemo(() => {
     const q = lamanWebSearch.toLowerCase().trim();
     if (q) {
-      return lamanWebRows
+      return lamanWebEffectiveRows
         .filter((r) => {
           const hay = `${r.code} ${r.name} ${r.website}`.toLowerCase();
           return hay.includes(q);
@@ -1948,191 +1858,20 @@ export default function App() {
         .map(lamanWebRowWithFeaturedWebsiteIfAny);
     }
     const byNorm = new Map();
-    for (const r of lamanWebRows) {
+    for (const r of lamanWebEffectiveRows) {
       const k = normalizeLamanWebSchoolCode(r.code);
       if (k) byNorm.set(k, r);
     }
     return LAMAN_WEB_FEATURED.map((def) =>
       mergeLamanWebFeaturedRow(def, findLamanWebRowForFeatured(byNorm, def)),
     );
-  }, [lamanWebRows, lamanWebSearch]);
+  }, [lamanWebEffectiveRows, lamanWebSearch]);
 
   const lamanWebStats = useMemo(() => {
-    const total = lamanWebRows.length;
-    const withUrl = lamanWebRows.filter((r) => r.website).length;
+    const total = lamanWebEffectiveRows.length;
+    const withUrl = lamanWebEffectiveRows.filter((r) => r.website).length;
     return { total, withUrl };
-  }, [lamanWebRows]);
-
-  const oprMembacaItems = useMemo(
-    () => oprMembaca?.items ?? [],
-    [oprMembaca],
-  );
-
-  const oprMembacaFacetDimensi = useMemo(() => {
-    const s = new Set();
-    for (const r of oprMembacaItems) {
-      const d = String(r.dimensi ?? "").trim();
-      if (d) s.add(d);
-    }
-    return [...s].sort((a, b) => a.localeCompare(b, "ms"));
-  }, [oprMembacaItems]);
-
-  const oprMembacaFacetStatus = useMemo(() => {
-    const s = new Set();
-    for (const r of oprMembacaItems) {
-      const t = String(r.statusOpr ?? "").trim();
-      if (t) s.add(t);
-    }
-    return [...s].sort((a, b) => a.localeCompare(b, "ms"));
-  }, [oprMembacaItems]);
-
-  const oprMembacaVisible = useMemo(() => {
-    const q = oprMembacaSearch.toLowerCase().trim();
-    return oprMembacaItems.filter((r) => {
-      if (oprMembacaDimensi !== "ALL") {
-        if (
-          String(r.dimensi ?? "").trim().toUpperCase() !==
-          oprMembacaDimensi.toUpperCase()
-        ) {
-          return false;
-        }
-      }
-      if (oprMembacaStatus !== "ALL") {
-        if (
-          String(r.statusOpr ?? "").trim().toUpperCase() !==
-          oprMembacaStatus.toUpperCase()
-        ) {
-          return false;
-        }
-      }
-      if (!q) return true;
-      const hay = `${r.namaProgram} ${r.sekolah} ${r.pegawaiPelapor} ${r.nosiriOpr} ${r.tarikhMula} ${r.tarikhTamat}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [
-    oprMembacaItems,
-    oprMembacaSearch,
-    oprMembacaDimensi,
-    oprMembacaStatus,
-  ]);
-
-  const oprMembacaStats = useMemo(() => {
-    const total = oprMembacaItems.length;
-    const denganPautan = oprMembacaItems.filter((r) =>
-      String(r.oprLink ?? "").startsWith("http"),
-    ).length;
-    const byStatus = {};
-    for (const r of oprMembacaItems) {
-      const k = String(r.statusOpr ?? "").trim() || "—";
-      byStatus[k] = (byStatus[k] ?? 0) + 1;
-    }
-    return { total, denganPautan, byStatus };
-  }, [oprMembacaItems]);
-
-  const delimaInsight = useMemo(() => {
-    const n = delimaRows.length;
-    if (!n) {
-      return {
-        schools: 0,
-        avgTovGuru: null,
-        avgTovMurid: null,
-        avgAktiviti: null,
-        avgDisGuru: null,
-        avgDisMurid: null,
-        avgNovGuru: null,
-        avgNovMurid: null,
-        bantuSessionsTotal: 0,
-        bantuSchoolsWithRekod: 0,
-        series: [],
-        seriesDisplay: [],
-        schoolsGuruGteTov: 0,
-        schoolsMuridGteTov: 0,
-        kpiGuruOk: false,
-        kpiMuridOk: false,
-      };
-    }
-    const sum = (arr) => arr.reduce((a, b) => a + b, 0);
-    const tovG = delimaRows.map((r) => r.tovGuru).filter((x) => x != null);
-    const tovM = delimaRows.map((r) => r.tovMurid).filter((x) => x != null);
-    const akt = delimaRows.map((r) => r.aktivitiPct).filter((x) => x != null);
-    const dG = delimaRows.map((r) => r.disGuru).filter((x) => x != null);
-    const dM = delimaRows.map((r) => r.disMurid).filter((x) => x != null);
-    const novG = delimaRows.map((r) => r.novGuru).filter((x) => x != null);
-    const novM = delimaRows.map((r) => r.novMurid).filter((x) => x != null);
-
-    const avgTovGuru = tovG.length ? sum(tovG) / tovG.length : null;
-    const avgTovMurid = tovM.length ? sum(tovM) / tovM.length : null;
-    const avgDisGuru = dG.length ? sum(dG) / dG.length : null;
-    const avgDisMurid = dM.length ? sum(dM) / dM.length : null;
-    const avgNovGuru = novG.length ? sum(novG) / novG.length : null;
-    const avgNovMurid = novM.length ? sum(novM) / novM.length : null;
-
-    const bantuSessionsTotal = delimaRows.reduce(
-      (acc, r) => acc + (r.bantuKali ?? 0),
-      0
-    );
-    const bantuSchoolsWithRekod = delimaRows.filter((r) => r.bantuKali > 0)
-      .length;
-
-    let schoolsGuruGteTov = 0;
-    let schoolsMuridGteTov = 0;
-    for (const r of delimaRows) {
-      if (r.tovGuru != null && r.disGuru != null && r.disGuru >= r.tovGuru) {
-        schoolsGuruGteTov += 1;
-      }
-      if (r.tovMurid != null && r.disMurid != null && r.disMurid >= r.tovMurid) {
-        schoolsMuridGteTov += 1;
-      }
-    }
-
-    const series = DELIMA_MONTH_DEF.map(({ label }, mi) => ({
-      label,
-      guru: meanFinite(delimaRows.map((r) => r.monthly[mi]?.guru)),
-      murid: meanFinite(delimaRows.map((r) => r.monthly[mi]?.murid)),
-    }));
-
-    const seriesDisplay = DELIMA_MONTH_DEF.map((m, mi) => {
-      let chartLabel = m.label;
-      if (m.label === "Okt²") chartLabel = "Okt";
-      else if (m.label === "Ogs²") chartLabel = "Ogs";
-      return {
-        label: m.label,
-        chartLabel,
-        guru: series[mi]?.guru ?? null,
-        murid: series[mi]?.murid ?? null,
-      };
-    }).filter((p) => !DELIMA_SKIP_CHART_LABELS.has(p.label));
-
-    return {
-      schools: n,
-      avgTovGuru,
-      avgTovMurid,
-      avgAktiviti: akt.length ? sum(akt) / akt.length : null,
-      avgDisGuru,
-      avgDisMurid,
-      avgNovGuru,
-      avgNovMurid,
-      bantuSessionsTotal,
-      bantuSchoolsWithRekod,
-      series,
-      seriesDisplay,
-      schoolsGuruGteTov,
-      schoolsMuridGteTov,
-      kpiGuruOk:
-        avgDisGuru != null && avgDisGuru + 1e-6 >= DELIMA_KPI_GURU_PCT,
-      kpiMuridOk:
-        avgDisMurid != null && avgDisMurid + 1e-6 >= DELIMA_KPI_MURID_PCT,
-    };
-  }, [delimaRows]);
-
-  const filteredDelimaRows = useMemo(() => {
-    const q = delimaSearch.toLowerCase().trim();
-    if (!q) return delimaRows;
-    return delimaRows.filter((r) => {
-      const hay = `${r.kod} ${r.nama}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [delimaRows, delimaSearch]);
+  }, [lamanWebEffectiveRows]);
 
   return (
     <main className="relative min-h-screen px-4 py-8 md:px-10">
@@ -2262,14 +2001,22 @@ export default function App() {
               </div>
             </summary>
             <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/15 p-4">
+              {maklumatAsasLoading ? (
+                <p className="mb-3 text-sm text-slate-400">Memuatkan Maklumat Asas…</p>
+              ) : null}
+              {maklumatAsasError ? (
+                <p className="mb-3 text-sm text-rose-300">
+                  {maklumatAsasError} — memaparkan sandaran tempatan.
+                </p>
+              ) : null}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <article className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl md:col-span-2 xl:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-lg font-semibold text-white">
-                    Carta Organisasi
+                    {maklumatAsasDisplay.cartaTitle}
                   </h2>
                   <a
-                    href={CARTA_ORGANISASI_IMG}
+                    href={maklumatAsasDisplay.cartaFull}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
@@ -2278,16 +2025,27 @@ export default function App() {
                   </a>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Organisasi USTP PPD Manjung — hierarki PPD, PKG dan COE.
+                  {maklumatAsasDisplay.cartaBlurb}
                 </p>
                 <div className="mt-3 max-h-[min(72vh,620px)] flex-1 overflow-auto rounded-xl border border-rose-900/25 bg-black/20">
-                  <img
-                    src={CARTA_ORGANISASI_IMG}
-                    alt="Carta Organisasi USTP PPD Manjung"
-                    className="w-full min-w-0 object-contain object-top"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  {maklumatAsasDisplay.cartaPreview.kind === "iframe" ? (
+                    <iframe
+                      title={maklumatAsasDisplay.cartaTitle}
+                      src={maklumatAsasDisplay.cartaPreview.src}
+                      className="h-[min(72vh,620px)] w-full min-w-0"
+                      style={{ border: 0, background: "#0b1220" }}
+                      loading="lazy"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <img
+                      src={maklumatAsasDisplay.cartaPreview.src}
+                      alt="Carta Organisasi USTP PPD Manjung"
+                      className="w-full min-w-0 object-contain object-top"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
                 </div>
               </article>
 
@@ -2342,9 +2100,11 @@ export default function App() {
 
               <article className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl md:col-span-1 xl:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-white">Maklumat PKG</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {maklumatAsasDisplay.pkgTitle}
+                  </h2>
                   <a
-                    href={MAKLUMAT_PKG_COE_IMG}
+                    href={maklumatAsasDisplay.pkgFull}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 rounded-lg border border-rose-800/50 bg-rose-950/40 px-2.5 py-1 text-[11px] font-semibold text-rose-100 hover:border-rose-600/60"
@@ -2353,25 +2113,37 @@ export default function App() {
                   </a>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Maklumat COE Daerah Manjung (AQA1001–AQA1005) — kemudahan &
-                  hubungi.
+                  {maklumatAsasDisplay.pkgBlurb}
                 </p>
                 <div className="mt-3 max-h-[min(72vh,620px)] flex-1 overflow-auto rounded-xl border border-rose-900/25 bg-black/20">
-                  <img
-                    src={MAKLUMAT_PKG_COE_IMG}
-                    alt="Maklumat PKG / COE Daerah Manjung"
-                    className="w-full min-w-0 object-contain object-top"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  {maklumatAsasDisplay.pkgPreview.kind === "iframe" ? (
+                    <iframe
+                      title={maklumatAsasDisplay.pkgTitle}
+                      src={maklumatAsasDisplay.pkgPreview.src}
+                      className="h-[min(72vh,620px)] w-full min-w-0"
+                      style={{ border: 0, background: "#0b1220" }}
+                      loading="lazy"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <img
+                      src={maklumatAsasDisplay.pkgPreview.src}
+                      alt="Maklumat PKG / COE Daerah Manjung"
+                      className="w-full min-w-0 object-contain object-top"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
                 </div>
               </article>
 
               <article className="flex min-h-[380px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl md:col-span-1 xl:col-span-2">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-white">Takwim</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {maklumatAsasDisplay.takwimTitle}
+                  </h2>
                   <a
-                    href={USTP_CALENDAR_EMBED}
+                    href={maklumatAsasDisplay.takwimFull}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
@@ -2383,7 +2155,7 @@ export default function App() {
                   <iframe
                     loading="lazy"
                     title="Takwim USTP — pratontoh OSC"
-                    src={USTP_CALENDAR_EMBED}
+                    src={maklumatAsasDisplay.takwimEmbed}
                     width="100%"
                     style={{ border: 0, background: "#0b1220" }}
                     className="h-full min-h-[min(52vh,420px)] w-full min-w-0"
@@ -2427,13 +2199,20 @@ export default function App() {
                       Analisis Data
                     </p>
                     <p className="text-xs text-slate-400">
-                      Subtopik: Data DELIMa · Status DCS · Program Ains · Pensijilan Digital · AI
-                      Tools (OPTIK 2)
+                      Subtopik: Data DELIMa, Status DCS, AINS, Pensijilan, OPTIK — data dari Google Sheet /
+                      demo CSV; refresh selepas edit. Buka satu subtopik pada satu masa.
                     </p>
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
-                  <details name="osc-sub-analisis" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                  <p className="mb-4 text-[11px] text-slate-500">
+                    Klik subtopik di bawah untuk paparan penuh — tidak lagi digabungkan dalam satu skrin.
+                  </p>
+
+                  <details
+                    name="osc-sub-analisis"
+                    className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]"
+                  >
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
                         <svg
@@ -2454,231 +2233,217 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Data DELIMa</p>
                         <p className="text-xs text-slate-400">
-                          Ringkasan penggunaan DELIMa · klik kad untuk paparan penuh
+                          Carta purata bulanan, ringkasan daerah &amp; pautan Sheet
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <article
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          if (e.target.closest("a,button")) return;
-                          if (!delimaLoading && !delimaError && delimaRows.length > 0) {
-                            setDelimaModalOpen(true);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key !== "Enter" && e.key !== " ") return;
-                          e.preventDefault();
-                          if (!delimaLoading && !delimaError && delimaRows.length > 0) {
-                            setDelimaModalOpen(true);
-                          }
-                        }}
-                        className="flex min-h-[520px] cursor-pointer flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl transition hover:border-cyan-400/45 hover:shadow-[0_0_28px_rgba(0,229,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
-                      >
-                      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                        <div>
+                      <article className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl">
+                        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                           <h2 className="text-xl font-semibold text-white">Data DELIMa</h2>
+                          {(delimaAn?.sourceUrl || DELIMA_GOOGLE_SHEET_URL) ? (
+                            <a
+                              href={delimaAn?.sourceUrl || DELIMA_GOOGLE_SHEET_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                            >
+                              Buka Google Sheet
+                            </a>
+                          ) : null}
                         </div>
-                        <a
-                          href={DELIMA_GOOGLE_SHEET_URL}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
-                        >
-                          Google Sheet
-                        </a>
-                      </div>
-
-                      <div className="flex flex-1 flex-col gap-2 rounded-xl border border-cyan-400/20 bg-slate-950/20 p-3">
-                        {delimaLoading ? (
-                          <p className="text-sm text-slate-300">Memuatkan data...</p>
-                        ) : delimaError ? (
-                          <p className="text-sm text-rose-200">{delimaError}</p>
+                        {delimaAn?.intro ? (
+                          <p className="mb-2 text-sm text-slate-400">{delimaAn.intro}</p>
                         ) : (
-                          <>
-                            <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-                              <div className="rounded-lg border border-cyan-400/15 bg-slate-950/40 px-2 py-1.5">
-                                <p className="text-slate-500">Sekolah</p>
-                                <p className="text-sm font-semibold text-white">
-                                  {delimaInsight.schools}
-                                </p>
-                              </div>
-                              <div className="rounded-lg border border-cyan-400/15 bg-slate-950/40 px-2 py-1.5">
-                                <p className="text-slate-500">Khidmat bantu</p>
-                                <p className="text-sm font-semibold text-cyan-200">
-                                  {delimaInsight.bantuSessionsTotal}{" "}
-                                  <span className="font-normal text-slate-500">kali</span>
-                                </p>
-                                <p className="mt-0.5 text-[10px] text-slate-500">
-                                  {delimaInsight.bantuSchoolsWithRekod} sekolah ada rekod
-                                </p>
-                              </div>
-                              <div className="col-span-2 rounded-lg border border-cyan-400/15 bg-slate-950/40 px-2 py-1.5 sm:col-span-1">
-                                <p className="text-slate-500">Capai ≥ TOV (Dis)</p>
-                                <p className="text-sm font-semibold text-white">
-                                  G {delimaInsight.schoolsGuruGteTov}/{delimaInsight.schools}{" "}
-                                  <span className="text-slate-500">·</span> M{" "}
-                                  {delimaInsight.schoolsMuridGteTov}/{delimaInsight.schools}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5 border-t border-cyan-400/10 pt-2 text-xs">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-slate-400">
-                                  Guru: TOV {fmtPct1(delimaInsight.avgTovGuru)} → Dis{" "}
-                                  {fmtPct1(delimaInsight.avgDisGuru)}
-                                </span>
-                                <DelimaDeltaPp
-                                  before={delimaInsight.avgTovGuru}
-                                  after={delimaInsight.avgDisGuru}
-                                  title="Purata daerah: TOV → Disember"
-                                />
-                              </div>
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-slate-400">
-                                  Murid: TOV {fmtPct1(delimaInsight.avgTovMurid)} → Dis{" "}
-                                  {fmtPct1(delimaInsight.avgDisMurid)}
-                                </span>
-                                <DelimaDeltaPp
-                                  before={delimaInsight.avgTovMurid}
-                                  after={delimaInsight.avgDisMurid}
-                                  title="Purata daerah: TOV → Disember"
-                                />
-                              </div>
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-slate-400">
-                                  Guru: Nov {fmtPct1(delimaInsight.avgNovGuru)} → Dis{" "}
-                                  {fmtPct1(delimaInsight.avgDisGuru)}
-                                </span>
-                                <DelimaDeltaPp
-                                  before={delimaInsight.avgNovGuru}
-                                  after={delimaInsight.avgDisGuru}
-                                  title="Purata daerah: November → Disember"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              <StatusPill
-                                label={`Sasaran Dis guru (${DELIMA_KPI_GURU_PCT}%): ${delimaInsight.kpiGuruOk ? "Capai" : "Belum"}`}
-                                tone={delimaInsight.kpiGuruOk ? "good" : "warn"}
-                              />
-                              <StatusPill
-                                label={`Sasaran Dis murid (${DELIMA_KPI_MURID_PCT}%): ${delimaInsight.kpiMuridOk ? "Capai" : "Belum"}`}
-                                tone={delimaInsight.kpiMuridOk ? "good" : "warn"}
-                              />
-                              <StatusPill
-                                label={`Guru aktif (bil): ${fmtPct1(delimaInsight.avgAktiviti)}`}
-                                tone="good"
-                              />
-                            </div>
-
-                            <DelimaMonthAvgTable seriesDisplay={delimaInsight.seriesDisplay} />
-                          </>
+                          <p className="mb-2 text-sm text-slate-400">
+                            Carta purata bulanan — data dari Google Sheet (refresh halaman selepas kemaskini).
+                          </p>
                         )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!delimaLoading && !delimaError && delimaRows.length > 0) {
-                            setDelimaModalOpen(true);
-                          }
-                        }}
-                        disabled={delimaLoading || !!delimaError || delimaRows.length === 0}
-                        className="mt-3 w-full rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 hover:shadow-[0_0_25px_rgba(0,229,255,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Paparan penuh
-                      </button>
+                        <div className="flex flex-1 flex-col gap-4">
+                          {delimaAnLoading ? (
+                            <p className="text-sm text-slate-300">Memuatkan data…</p>
+                          ) : delimaAnError ? (
+                            <p className="text-sm text-rose-200">{delimaAnError}</p>
+                          ) : delimaAn &&
+                            (delimaAn.seriesForChart.length > 0 ||
+                              delimaAn.seriesDisplay.length > 0 ||
+                              delimaAn.insight) ? (
+                            <>
+                              {delimaAn.insight ? (
+                                <DelimaSheetInsightBlock
+                                  insight={delimaAn.insight}
+                                  kpiGuru={delimaAn.kpiGuru}
+                                  kpiMurid={delimaAn.kpiMurid}
+                                />
+                              ) : null}
+                              {delimaAn.seriesForChart.length > 0 || delimaAn.seriesDisplay.length > 0 ? (
+                                <>
+                                  <div className="rounded-xl border border-cyan-400/20 bg-slate-950/30 p-2 sm:p-3">
+                                    <DelimaTrendChart
+                                      series={
+                                        delimaAn.seriesForChart.length > 0
+                                          ? delimaAn.seriesForChart
+                                          : delimaAn.seriesDisplay
+                                      }
+                                      height={220}
+                                    />
+                                  </div>
+                                  <div className="rounded-xl border border-cyan-400/15 bg-slate-950/35 p-2 sm:p-3">
+                                    <DelimaMonthAvgTable seriesDisplay={delimaAn.seriesDisplay} />
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-sm text-slate-500">
+                                  Tiada jadual purata bulan — tambah baris di bawah{" "}
+                                  <span className="font-mono text-slate-400">month_label</span> dalam Sheet
+                                  untuk carta &amp; jadual.
+                                </p>
+                              )}
+                              {DELIMA_SHOW_SASARAN_KPI ? (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  <StatusPill
+                                    label={`Sasaran guru (${delimaAn.kpiGuru}%) — rujukan Sheet`}
+                                    tone="good"
+                                  />
+                                  <StatusPill
+                                    label={`Sasaran murid (${delimaAn.kpiMurid}%) — rujukan Sheet`}
+                                    tone="good"
+                                  />
+                                </div>
+                              ) : null}
+                              {(delimaAn.sourceUrl || DELIMA_GOOGLE_SHEET_URL) ? (
+                                <a
+                                  href={delimaAn.sourceUrl || DELIMA_GOOGLE_SHEET_URL}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block w-full rounded-xl border border-cyan-400/25 bg-slate-950/50 px-3 py-2.5 text-center text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 hover:shadow-[0_0_25px_rgba(0,229,255,0.12)]"
+                                >
+                                  Paparan penuh
+                                </a>
+                              ) : null}
+                            </>
+                          ) : (
+                            <p className="text-sm text-slate-400">
+                              Tiada ringkasan daerah atau baris bulan dalam Sheet / CSV.
+                            </p>
+                          )}
+                        </div>
                       </article>
                       <DetailsCollapseFooter />
                     </div>
                   </details>
 
-                  <details name="osc-sub-analisis" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
+                  <details
+                    name="osc-sub-analisis"
+                    className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]"
+                  >
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200">
                         <svg
                           className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="currentColor"
+                          fill="none"
                           viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
                           aria-hidden
                         >
                           <path
-                            fillRule="evenodd"
-                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                            clipRule="evenodd"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
                           />
                         </svg>
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Status DCS</p>
                         <p className="text-xs text-slate-400">
-                          Carta KPI · TOV daerah · capaian berbanding sasaran kebangsaan
+                          Trend TOV → capai, KPI kebangsaan, gambar &amp; pautan Sheet
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                    <article
-                      className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl"
-                    >
-                      <h2 className="text-xl font-semibold text-white">Status DCS</h2>
-                      <p className="mt-2 text-sm text-slate-300">Kemaskini terakhir: 25/03/2026, 14:30</p>
-
-                      <div className="mt-4 flex min-h-0 flex-1 flex-col rounded-xl border border-cyan-400/15 bg-slate-950/40 p-3">
-                        <DcsKpiLineChart />
-                        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-slate-500">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="inline-block h-0 w-8 border-t-2 border-dashed border-amber-300/90"
-                              aria-hidden
-                            />
-                            Garisan sasaran kebangsaan
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="inline-block h-0.5 w-8 rounded-full bg-cyan-400"
-                              aria-hidden
-                            />
-                            Capaian daerah
-                          </span>
-                        </div>
-                        {DCS_CAPAI_2025_DAERAH >= DCS_KPI_2025_KEBANGSAAN ? (
-                          <p className="mt-2 text-center text-[11px] font-medium text-emerald-300/90">
-                            Daerah melebihi sasaran kebangsaan
-                          </p>
+                      <article className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl">
+                        <h2 className="text-xl font-semibold text-white">Status DCS</h2>
+                        <p className="mt-2 text-sm text-slate-300">
+                          {dcsAn?.updatedText
+                            ? `Kemaskini: ${dcsAn.updatedText}`
+                            : "Carta & teks dikawal melalui Google Sheet — refresh halaman selepas edit."}
+                        </p>
+                        {dcsAnError ? (
+                          <p className="mt-2 text-sm text-rose-200">{dcsAnError}</p>
                         ) : null}
-                      </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <StatusPill
-                          label={`TOV 2024 (Daerah): ${DCS_TOV_2024_DAERAH}%`}
-                          tone="warn"
-                        />
-                        <StatusPill
-                          label={`KPI 2025 (Kebangsaan): ${DCS_KPI_2025_KEBANGSAAN}%`}
-                          tone="good"
-                        />
-                        <StatusPill
-                          label={`Capai KPI 2025 (Daerah): ${DCS_CAPAI_2025_DAERAH}%`}
-                          tone="good"
-                        />
-                      </div>
+                        <div className="mt-4 flex min-h-0 flex-1 flex-col rounded-xl border border-cyan-400/15 bg-slate-950/40 p-3">
+                          <DcsKpiLineChart
+                            tov={dcsChart.tov}
+                            kpi={dcsChart.kpi}
+                            capai={dcsChart.capai}
+                            yMin={dcsChart.yMin}
+                            yMax={dcsChart.yMax}
+                          />
+                          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-slate-500">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span
+                                className="inline-block h-0 w-8 border-t-2 border-dashed border-amber-300/90"
+                                aria-hidden
+                              />
+                              Garisan sasaran kebangsaan
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span
+                                className="inline-block h-0.5 w-8 rounded-full bg-cyan-400"
+                                aria-hidden
+                              />
+                              Capaian daerah
+                            </span>
+                          </div>
+                          {dcsChart.capai >= dcsChart.kpi ? (
+                            <p className="mt-2 text-center text-[11px] font-medium text-emerald-300/90">
+                              Daerah melebihi sasaran kebangsaan
+                            </p>
+                          ) : null}
+                        </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setIsDcsImageOpen(true)}
-                        className="mt-4 w-full rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 hover:shadow-[0_0_25px_rgba(0,229,255,0.12)]"
-                      >
-                        Klik untuk lihat gambar penuh
-                      </button>
-                    </article>
-                    <DetailsCollapseFooter />
+                        {dcsAn?.footer ? (
+                          <p className="mt-4 whitespace-pre-line text-sm text-slate-400">{dcsAn.footer}</p>
+                        ) : null}
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <StatusPill
+                            label={`TOV 2024 (Daerah): ${dcsChart.tov}%`}
+                            tone="warn"
+                          />
+                          <StatusPill
+                            label={`KPI 2025 (Kebangsaan): ${dcsChart.kpi}%`}
+                            tone="good"
+                          />
+                          <StatusPill
+                            label={`Capai KPI 2025 (Daerah): ${dcsChart.capai}%`}
+                            tone="good"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                          {dcsAn?.sourceUrl ? (
+                            <a
+                              href={dcsAn.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex w-full items-center justify-center rounded-xl border border-cyan-400/30 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 sm:flex-1"
+                            >
+                              {dcsAn.sourceLabel || "Buka sumber data"}
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => setIsDcsImageOpen(true)}
+                            className="w-full rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 sm:flex-1"
+                          >
+                            {dcsAn?.imageLabel || "Klik untuk lihat gambar penuh"}
+                          </button>
+                        </div>
+                      </article>
+                      <DetailsCollapseFooter />
                     </div>
                   </details>
 
@@ -2703,57 +2468,62 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">Program Ains</p>
                         <p className="text-xs text-slate-400">
-                          Statistik kelulusan · carta mengikut jenis sekolah
+                          Statistik dari Sheet — senarai penuh di Sheet sumber
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article
-                      className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl"
+                      className="flex min-h-[320px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-4 backdrop-blur-2xl"
                     >
-                      <div className="mb-3 flex items-center justify-between">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-xl font-semibold text-white">Program Ains</h2>
+                        {ainsAn?.sourceUrl ? (
+                          <a
+                            href={ainsAn.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                          >
+                            {ainsAn.sourceLabel || "Buka Sheet penuh"}
+                          </a>
+                        ) : null}
                       </div>
+                      <p className="mb-3 text-sm text-slate-400">
+                        Carta daripada nilai dalam Google Sheet — senarai pelajar dibuka di Sheet sumber.
+                      </p>
                       <div className="flex flex-col gap-3">
                         <div className="rounded-xl border border-cyan-400/15 bg-slate-950/40 px-2 py-2">
                           <ProgramAinsCharts
-                            stats={programStats}
-                            loading={programLoading}
-                            error={programError}
+                            stats={ainsStats}
+                            loading={ainsLoading}
+                            error={ainsError}
                           />
                         </div>
                         <div className="rounded-xl border border-cyan-400/20 bg-slate-950/20 p-3">
                           <div className="flex flex-wrap gap-2">
                             <StatusPill
-                              label={`Approved: ${programStats.approved}`}
+                              label={`Approved: ${ainsStats.approved}`}
                               tone="good"
                             />
                             <StatusPill
-                              label={`Rejected: ${programStats.rejected}`}
-                              tone={programStats.rejected > 0 ? "bad" : "warn"}
+                              label={`Rejected: ${ainsStats.rejected}`}
+                              tone={ainsStats.rejected > 0 ? "bad" : "warn"}
                             />
                             <StatusPill
-                              label={`SK Approved: ${programStats.skApproved}`}
+                              label={`SK Approved: ${ainsStats.skApproved}`}
                               tone="good"
                             />
                             <StatusPill
-                              label={`SJKC Approved: ${programStats.sjkcApproved}`}
+                              label={`SJKC Approved: ${ainsStats.sjkcApproved}`}
                               tone="good"
                             />
                             <StatusPill
-                              label={`SJKT Approved: ${programStats.sjktApproved}`}
+                              label={`SJKT Approved: ${ainsStats.sjktApproved}`}
                               tone="good"
                             />
                           </div>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setProgramModalOpen(true)}
-                          className="mt-auto w-full rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 hover:shadow-[0_0_25px_rgba(0,229,255,0.12)]"
-                        >
-                          Lihat Senarai Pelajar (Manjung)
-                        </button>
                       </div>
                     </article>
                     <DetailsCollapseFooter />
@@ -2787,21 +2557,46 @@ export default function App() {
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
                     <article
-                      className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl"
+                      className="flex min-h-[380px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl"
                     >
-                      <h2 className="text-xl font-semibold leading-snug text-white">
-                        ANALISIS PENSIJILAN DIGITAL
-                      </h2>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h2 className="text-xl font-semibold leading-snug text-white">
+                          ANALISIS PENSIJILAN DIGITAL
+                        </h2>
+                        {pensijilanAn?.sourceUrl ? (
+                          <a
+                            href={pensijilanAn.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                          >
+                            {pensijilanAn.sourceLabel || "Buka sumber"}
+                          </a>
+                        ) : null}
+                      </div>
                       <p className="mt-2 text-sm text-slate-300">
-                        Ringkasan data pensijilan mengikut lokasi, jenis sekolah dan penyedia.
+                        {pensijilanAn?.intro ||
+                          "Ringkasan data pensijilan mengikut lokasi, jenis sekolah dan penyedia."}
                       </p>
-                      <PensijilanDigitalSummary />
+                      {pensijilanAnError ? (
+                        <p className="mt-2 text-sm text-rose-200">{pensijilanAnError}</p>
+                      ) : null}
+                      <PensijilanDigitalSummary
+                        data={
+                          pensijilanAn?.locations && pensijilanAn?.schools
+                            ? {
+                                locations: pensijilanAn.locations,
+                                schools: pensijilanAn.schools,
+                              }
+                            : undefined
+                        }
+                      />
                       <button
                         type="button"
                         onClick={() => setIsPensijilanDigitalImageOpen(true)}
                         className="mt-4 w-full rounded-xl border border-cyan-400/20 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-cyan-200 hover:border-cyan-300/50 hover:shadow-[0_0_25px_rgba(0,229,255,0.12)]"
                       >
-                        Klik untuk lihat gambar penuh
+                        {pensijilanAn?.imageModalLabel || "Klik untuk lihat gambar penuh"}
                       </button>
                     </article>
                     <DetailsCollapseFooter />
@@ -2829,17 +2624,35 @@ export default function App() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">AI Tools dalam DELIMa</p>
                         <p className="text-xs text-slate-400">
-                          Ringkasan OPTIK 2 berbanding KPI kebangsaan (55%)
+                          OPTIK 2 dari Sheet — berbanding KPI kebangsaan
                         </p>
                       </div>
                     </summary>
                     <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                    <article className="flex min-h-[520px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl">
-                      <h2 className="text-xl font-semibold text-white">AI Tools dalam DELIMa</h2>
+                    <article className="flex min-h-[380px] flex-col rounded-2xl border border-cyan-400/20 bg-slate-900/28 p-5 backdrop-blur-2xl">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h2 className="text-xl font-semibold text-white">AI Tools dalam DELIMa</h2>
+                        {optikAn?.sourceUrl ? (
+                          <a
+                            href={optikAn.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-lg border border-cyan-400/30 bg-slate-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:border-cyan-300/50"
+                          >
+                            {optikAn.sourceLabel || "Buka sumber"}
+                          </a>
+                        ) : null}
+                      </div>
                       <p className="mt-2 text-sm text-slate-300">
-                        Ringkasan OPTIK 2 berbanding garisan KPI kebangsaan (55%).
+                        Ringkasan OPTIK 2 berbanding garisan KPI kebangsaan — data dari Sheet.
                       </p>
-                      <AiToolsDelimaSummary />
+                      {optikLoading ? (
+                        <p className="mt-3 text-sm text-slate-400">Memuatkan…</p>
+                      ) : optikError ? (
+                        <p className="mt-3 text-sm text-rose-200">{optikError}</p>
+                      ) : (
+                        <AiToolsDelimaSummary sheet={optikAn} />
+                      )}
                     </article>
                     <DetailsCollapseFooter />
                     </div>
@@ -2881,6 +2694,13 @@ export default function App() {
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <OscTopicSheetBody
+                    sheetGid={import.meta.env.VITE_OSC_GID_INTEGRASI}
+                    demoPath={OSC_TOPIK_DEMO_CSV.integrasi}
+                    detailsName="osc-sub-integrasi"
+                    loadingLabel="Memuatkan tab Integrasi daripada Google Sheet…"
+                    fallback={
+                      <>
                   <details name="osc-sub-integrasi" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/25 bg-violet-500/10 text-violet-200">
@@ -3472,7 +3292,9 @@ export default function App() {
                       <DetailsCollapseFooter />
                     </div>
                   </details>
-                  <DetailsCollapseFooter />
+                      </>
+                    }
+                  />
                 </div>
               </details>
 
@@ -3512,6 +3334,13 @@ export default function App() {
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <OscTopicSheetBody
+                    sheetGid={import.meta.env.VITE_OSC_GID_HEBAHAN}
+                    demoPath={OSC_TOPIK_DEMO_CSV.hebahan}
+                    detailsName="osc-sub-hebahan"
+                    loadingLabel="Memuatkan tab Hebahan daripada Google Sheet…"
+                    fallback={
+                      <>
                   <details name="osc-sub-hebahan" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
@@ -3723,7 +3552,9 @@ export default function App() {
                       <DetailsCollapseFooter />
                     </div>
                   </details>
-                  <DetailsCollapseFooter />
+                      </>
+                    }
+                  />
                 </div>
               </details>
 
@@ -3758,6 +3589,24 @@ export default function App() {
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <ItmLamanWebSekolahSection
+                    loading={lamanWebLoading}
+                    error={lamanWebError}
+                    stats={lamanWebStats}
+                    search={lamanWebSearch}
+                    onSearchChange={(e) => setLamanWebSearch(e.target.value)}
+                    visibleRows={lamanWebVisibleRows}
+                    featuredCount={LAMAN_WEB_FEATURED.length}
+                    mergedTotal={lamanWebEffectiveRows.length}
+                  />
+                  <OscTopicSheetBody
+                    sheetGid={import.meta.env.VITE_OSC_GID_ITM}
+                    demoPath={OSC_TOPIK_DEMO_CSV.itm}
+                    detailsName="osc-sub-itm"
+                    loadingLabel="Memuatkan tab ITM daripada Google Sheet…"
+                    omitTrailingPageFooter
+                    fallback={
+                      <>
                   <details name="osc-sub-itm" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 text-emerald-200">
@@ -3943,115 +3792,9 @@ export default function App() {
                     <DetailsCollapseFooter />
                     </div>
                   </details>
-
-                  <details name="osc-sub-itm" className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-400/35 bg-sky-500/10 text-sky-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Laman web sekolah</p>
-                        <p className="text-xs text-slate-400">
-                          8 sekolah rujukan (SMK → SK → SJKC → SJKT); cari untuk sekolah lain
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      {lamanWebLoading ? (
-                        <p className="text-sm text-slate-400">Memuatkan senarai sekolah...</p>
-                      ) : lamanWebError ? (
-                        <p className="text-sm text-rose-300">{lamanWebError}</p>
-                      ) : (
-                        <>
-                          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                            <p className="text-[11px] text-slate-500">
-                              Jumlah dalam data:{" "}
-                              <span className="font-semibold text-cyan-200/90">
-                                {lamanWebStats.total}
-                              </span>
-                              {" · "}
-                              ada pautan:{" "}
-                              <span className="font-semibold text-cyan-200/90">
-                                {lamanWebStats.withUrl}
-                              </span>
-                              {!lamanWebSearch.trim() ? (
-                                <>
-                                  {" "}
-                                  · paparan utama:{" "}
-                                  <span className="text-slate-400">
-                                    {lamanWebVisibleRows.length}
-                                  </span>
-                                  /{LAMAN_WEB_FEATURED.length}
-                                </>
-                              ) : lamanWebVisibleRows.length !== lamanWebRows.length ? (
-                                <>
-                                  {" "}
-                                  · hasil carian:{" "}
-                                  <span className="text-slate-400">
-                                    {lamanWebVisibleRows.length}
-                                  </span>
-                                </>
-                              ) : null}
-                            </p>
-                            <input
-                              type="search"
-                              value={lamanWebSearch}
-                              onChange={(e) => setLamanWebSearch(e.target.value)}
-                              placeholder="Cari sekolah lain — kod, nama atau URL…"
-                              className="w-full rounded-lg border border-cyan-400/25 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-cyan-400/50 sm:max-w-xs"
-                              aria-label="Tapis laman web sekolah"
-                            />
-                          </div>
-                          {lamanWebVisibleRows.length === 0 ? (
-                            <p className="text-sm text-slate-400">Tiada rekod sepadan.</p>
-                          ) : (
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              {lamanWebVisibleRows.map((r) => (
-                                <article
-                                  key={`${r.code}-${r.name}`}
-                                  className="flex flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                                >
-                                  <p className="font-mono text-[10px] font-semibold tracking-wide text-cyan-300/90">
-                                    {r.code || "—"}
-                                  </p>
-                                  <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-white">
-                                    {r.name || "—"}
-                                  </h3>
-                                  {r.website ? (
-                                    <a
-                                      href={r.website}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="mt-2 inline-flex w-fit items-center gap-1 rounded-lg border border-cyan-400/30 bg-slate-950/50 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 transition hover:border-cyan-400/55 hover:bg-slate-900/60"
-                                    >
-                                      Buka laman web
-                                      <span aria-hidden>→</span>
-                                    </a>
-                                  ) : (
-                                    <p className="mt-2 text-[11px] text-slate-500">Tiada pautan</p>
-                                  )}
-                                </article>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
+                      </>
+                    }
+                  />
                   <DetailsCollapseFooter />
                 </div>
               </details>
@@ -4082,218 +3825,18 @@ export default function App() {
                       Pembudayaan Amalan Membaca
                     </p>
                     <p className="text-xs text-slate-400">
-                      Subtopik: OPR · Program Inovasi (Video, Artsteps) · JNJ (Blink Book, Must Read)
+                      Subtopik: OPR 2025 (kad Sheet) · Program Inovasi · JNJ (Blink Book, Must Read)
                     </p>
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
-                  <details name="osc-sub-membaca" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">OPR</p>
-                        <p className="text-xs text-slate-400">
-                          OPR Amalan Membaca · (subtopik OPR lain akan ditambah)
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      {oprMembacaLoading ? (
-                        <p className="text-sm text-slate-400">
-                          Memuatkan rekod OPR…
-                        </p>
-                      ) : oprMembacaError ? (
-                        <p className="text-sm text-rose-300">{oprMembacaError}</p>
-                      ) : (
-                        <>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
-                            <article className="flex min-h-[220px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                OPR AMALAN MEMBACA
-                              </p>
-                              <p className="mt-2 text-sm font-semibold text-white">
-                                OPR Amalan Membaca Manjung
-                              </p>
-                              <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                                Skop Manjung (Perak Drift) · zon Asia/Kuala Lumpur — sumber{" "}
-                                <code className="text-cyan-300/80">
-                                  opr-amalan-membaca-manjung.json
-                                </code>
-                              </p>
-                              <div className="mt-auto space-y-2 border-t border-cyan-400/15 pt-3 text-[11px] text-slate-500">
-                                <p>
-                                  Jumlah rekod:{" "}
-                                  <span className="font-semibold text-cyan-200/90">
-                                    {oprMembacaStats.total}
-                                  </span>
-                                  {" · "}
-                                  ada pautan:{" "}
-                                  <span className="font-semibold text-cyan-200/90">
-                                    {oprMembacaStats.denganPautan}
-                                  </span>
-                                </p>
-                                {Object.keys(oprMembacaStats.byStatus).length >
-                                0 ? (
-                                  <p>
-                                    Status:{" "}
-                                    {Object.entries(
-                                      oprMembacaStats.byStatus,
-                                    ).map(([k, n]) => (
-                                      <span key={k} className="mr-2 inline">
-                                        <span className="text-slate-400">
-                                          {k}
-                                        </span>
-                                        <span className="font-semibold text-slate-300">
-                                          ({n})
-                                        </span>
-                                      </span>
-                                    ))}
-                                  </p>
-                                ) : null}
-                              </div>
-                            </article>
-                          </div>
-                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                            <input
-                              type="search"
-                              value={oprMembacaSearch}
-                              onChange={(e) => setOprMembacaSearch(e.target.value)}
-                              placeholder="Cari nama program, sekolah, pelapor…"
-                              className="w-full rounded-lg border border-cyan-400/25 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-cyan-400/45 sm:max-w-xs"
-                              aria-label="Tapis rekod OPR Amalan Membaca"
-                            />
-                            <label className="flex items-center gap-2 text-[11px] text-slate-400">
-                              <span className="shrink-0">Dimensi</span>
-                              <select
-                                value={oprMembacaDimensi}
-                                onChange={(e) =>
-                                  setOprMembacaDimensi(e.target.value)
-                                }
-                                className="rounded-lg border border-cyan-400/25 bg-slate-950/60 px-2 py-2 text-xs text-slate-100 outline-none focus:border-cyan-400/45"
-                              >
-                                <option value="ALL">Semua</option>
-                                {oprMembacaFacetDimensi.map((d) => (
-                                  <option key={d} value={d}>
-                                    {d}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="flex items-center gap-2 text-[11px] text-slate-400">
-                              <span className="shrink-0">Status OPR</span>
-                              <select
-                                value={oprMembacaStatus}
-                                onChange={(e) =>
-                                  setOprMembacaStatus(e.target.value)
-                                }
-                                className="rounded-lg border border-cyan-400/25 bg-slate-950/60 px-2 py-2 text-xs text-slate-100 outline-none focus:border-cyan-400/45"
-                              >
-                                <option value="ALL">Semua</option>
-                                {oprMembacaFacetStatus.map((d) => (
-                                  <option key={d} value={d}>
-                                    {d}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                          </div>
-                          {oprMembacaVisible.length === 0 ? (
-                            <p className="mt-3 text-sm text-slate-400">
-                              Tiada rekod sepadan.
-                            </p>
-                          ) : (
-                            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
-                              {oprMembacaVisible.map((r) => (
-                                <article
-                                  key={`opr-membaca-${r.id}-${r.oprLink}`}
-                                  className="flex h-full min-h-[220px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                                >
-                                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                                    <p className="font-mono text-[10px] font-semibold tracking-wide text-cyan-300/90">
-                                      {r.nosiriOpr || "—"}
-                                    </p>
-                                    {r.oprLink ? (
-                                      <a
-                                        href={r.oprLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                                      >
-                                        Buka OPR
-                                      </a>
-                                    ) : (
-                                      <span className="shrink-0 rounded-lg border border-slate-600/50 px-2.5 py-1 text-[11px] text-slate-500">
-                                        Tiada pautan
-                                      </span>
-                                    )}
-                                  </div>
-                                  <h4 className="line-clamp-3 text-sm font-semibold leading-snug text-white">
-                                    {r.namaProgram || "—"}
-                                  </h4>
-                                  {r.sekolah ? (
-                                    <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-400">
-                                      {r.sekolah}
-                                    </p>
-                                  ) : null}
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {r.dimensi ? (
-                                      <span className="rounded-md border border-slate-600/50 bg-slate-950/50 px-2 py-0.5 text-[10px] font-medium text-slate-300">
-                                        {r.dimensi}
-                                      </span>
-                                    ) : null}
-                                    {r.statusOpr ? (
-                                      <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-200/90">
-                                        {r.statusOpr}
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <div className="mt-auto space-y-1 border-t border-cyan-400/15 pt-2">
-                                    <p className="text-[11px] text-slate-500">
-                                      {r.tarikhMula || "—"}
-                                      {r.tarikhTamat &&
-                                      r.tarikhTamat !== r.tarikhMula
-                                        ? ` → ${r.tarikhTamat}`
-                                        : null}
-                                      {r.tahun ? ` · ${r.tahun}` : null}
-                                    </p>
-                                    {(r.bilGuru || r.bilMurid) && (
-                                      <p className="text-[11px] text-slate-500">
-                                        Guru/pegawai: {r.bilGuru || "—"} · Murid:{" "}
-                                        {r.bilMurid || "—"}
-                                      </p>
-                                    )}
-                                    {r.pegawaiPelapor ? (
-                                      <p className="text-[11px] text-slate-500">
-                                        Pelapor: {r.pegawaiPelapor}
-                                        {r.jawatan ? ` (${r.jawatan})` : ""}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                </article>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
+                  <OscTopicSheetBody
+                    sheetGid={import.meta.env.VITE_OSC_GID_PEMBUDAYAAN_MEMBACA}
+                    demoPath={OSC_TOPIK_DEMO_CSV.pembudayaanMembaca}
+                    detailsName="osc-sub-membaca"
+                    loadingLabel="Memuatkan tab Pembudayaan Membaca daripada Google Sheet…"
+                    fallback={
+                      <>
                   <details name="osc-sub-membaca" className="group mb-4 rounded-2xl border border-violet-400/25 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_20px_rgba(167,139,250,0.06)] transition-[border-color,box-shadow] duration-200 open:border-violet-400/45 open:shadow-[0_0_28px_rgba(167,139,250,0.1)]">
                       <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/35 bg-violet-500/10 text-violet-200">
@@ -4521,7 +4064,9 @@ export default function App() {
                         <DetailsCollapseFooter />
                       </div>
                     </details>
-                  <DetailsCollapseFooter />
+                      </>
+                    }
+                  />
                 </div>
               </details>
 
@@ -4556,6 +4101,13 @@ export default function App() {
                   </div>
                 </summary>
                 <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
+                  <OscTopicSheetBody
+                    sheetGid={import.meta.env.VITE_OSC_GID_PEMERKASAAN}
+                    demoPath={OSC_TOPIK_DEMO_CSV.pemerkasaan}
+                    detailsName="osc-sub-pemerkasaan"
+                    loadingLabel="Memuatkan tab Pemerkasaan daripada Google Sheet…"
+                    fallback={
+                      <>
                   <details name="osc-sub-pemerkasaan" className="group mb-4 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-200">
@@ -4787,660 +4339,14 @@ export default function App() {
                       <DetailsCollapseFooter />
                     </div>
                   </details>
-                  <DetailsCollapseFooter />
+                      </>
+                    }
+                  />
                 </div>
               </details>
 
-              <details
-                name="osc-page-topik"
-                className="group rounded-2xl border border-cyan-400/20 bg-slate-900/28 backdrop-blur-2xl open:border-cyan-400/40"
-              >
-                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/12 text-cyan-200">
-                    <svg
-                      className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      aria-hidden
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                      />
-                    </svg>
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white">Bahan Sokongan</p>
-                    <p className="text-xs text-slate-400">
-                      Buku pengurusan, pelaporan, pencapaian, surat, penyebaran dasar
-                      (MJ3PD/JKPA), bahan PDP digital · Contoh Bahan Delima
-                    </p>
-                  </div>
-                </summary>
-                <div className="rounded-b-2xl border-t border-cyan-400/15 p-4">
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/25 bg-violet-500/10 text-violet-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Buku Pengurusan</p>
-                        <p className="text-xs text-slate-400">
-                          USTP {BOOK_PENGURUSAN_BY_YEAR[0].year}–{BOOK_PENGURUSAN_BY_YEAR[BOOK_PENGURUSAN_BY_YEAR.length - 1].year} ·{" "}
-                          <span className="text-cyan-300/90">{BOOK_PENGURUSAN_AUTHOR}</span>
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        {BOOK_PENGURUSAN_BY_YEAR.map(({ year, viewUrl }) => (
-                          <article
-                            key={year}
-                            className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                          >
-                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                              <h3 className="text-base font-semibold text-white">
-                                Buku Pengurusan USTP {year}
-                              </h3>
-                              <a
-                                href={viewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                              >
-                                Buka Penuh
-                              </a>
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                              <iframe
-                                loading="lazy"
-                                title={`Buku Pengurusan USTP ${year}`}
-                                src={`${viewUrl}?embed`}
-                                width="100%"
-                                style={{ border: 0, background: "#0b1220" }}
-                                className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                                allowFullScreen
-                                allow="fullscreen"
-                              />
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
+              <BahanSokonganPageSection />
 
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Pelaporan</p>
-                        <p className="text-xs text-slate-400">
-                          Epelaporan {EPELAPORAN_BY_YEAR[0].year}–{EPELAPORAN_BY_YEAR[EPELAPORAN_BY_YEAR.length - 1].year} (Canva) · Takwim · Pelaporan DPD (Looker)
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        {EPELAPORAN_BY_YEAR.map(({ year, viewUrl }) => (
-                          <article
-                            key={year}
-                            className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                          >
-                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                              <h3 className="text-base font-semibold text-white">Epelaporan {year}</h3>
-                              <a
-                                href={viewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                              >
-                                Buka Penuh
-                              </a>
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                              <iframe
-                                loading="lazy"
-                                title={`Epelaporan ${year}`}
-                                src={`${viewUrl}?embed`}
-                                width="100%"
-                                style={{ border: 0, background: "#0b1220" }}
-                                className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                                allowFullScreen
-                                allow="fullscreen"
-                              />
-                            </div>
-                          </article>
-                        ))}
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">Pelaporan Tambahan</h3>
-                            <a
-                              href={TAKWIM_EMBED.replace("/embed", "")}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <p className="mb-2 text-[11px] text-slate-500">Takwim / Looker Studio</p>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Pelaporan Tambahan — Takwim Looker"
-                              src={TAKWIM_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">Pelaporan DPD</h3>
-                            <a
-                              href={PELAPORAN_DPD_EMBED.replace("/embed", "")}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <p className="mb-2 text-[11px] text-slate-500">Looker Studio</p>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Pelaporan DPD Looker"
-                              src={PELAPORAN_DPD_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                            />
-                          </div>
-                        </article>
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Pencapaian</p>
-                        <p className="text-xs text-slate-400">
-                          Kertas kerja Majlis Apresiasi Digital · Slaid Majlis Apresiasi (Canva) ·
-                          Pencapaian USTP 2025 · kad penghargaan · success story (Canva)
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">
-                              Kertas Kerja Majlis Apresiasi Digital
-                            </h3>
-                            <a
-                              href={MAJLIS_APRESIASI_DIGITAL_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Kertas Kerja Majlis Apresiasi Digital"
-                              src={MAJLIS_APRESIASI_DIGITAL_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                              allow="fullscreen"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">
-                              Slaid Majlis Apresiasi
-                            </h3>
-                            <a
-                              href={SLAID_MAJLIS_APRESIASI_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Slaid Majlis Apresiasi"
-                              src={SLAID_MAJLIS_APRESIASI_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                              allow="fullscreen"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">Pencapaian USTP 2025</h3>
-                            <a
-                              href={PENCAPAIAN_USTP_2025_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Pencapaian USTP 2025"
-                              src={PENCAPAIAN_USTP_2025_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                              allow="fullscreen"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">Kad Penghargaan PPD Manjung</h3>
-                            <a
-                              href={KAD_PENGHARGAAN_PPD_MANJUNG_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Kad Penghargaan PPD Manjung"
-                              src={KAD_PENGHARGAAN_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                              allow="fullscreen"
-                            />
-                          </div>
-                        </article>
-                        <article className="flex min-h-[380px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl">
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-base font-semibold text-white">Success Story</h3>
-                            <a
-                              href={SUCCESS_STORY_USTP_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                            >
-                              Buka Penuh
-                            </a>
-                          </div>
-                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                            <iframe
-                              loading="lazy"
-                              title="Success Story USTP"
-                              src={SUCCESS_STORY_USTP_EMBED}
-                              width="100%"
-                              style={{ border: 0, background: "#0b1220" }}
-                              className="h-[min(42vh,320px)] w-full sm:h-[min(48vh,360px)]"
-                              allowFullScreen
-                              allow="fullscreen"
-                            />
-                          </div>
-                        </article>
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-110"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Surat punca kuasa</p>
-                        <p className="text-xs text-slate-400">
-                          Pemerkasaan DELIMa (2 surat) · arahan khidmat sokongan —{" "}
-                          <span className="text-amber-200/90">baharu</span>
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {SURAT_PUNCA_KUASA_CARDS.map(({ key, title, blurb, viewUrl }) => (
-                          <article
-                            key={key}
-                            className="flex min-h-[360px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                          >
-                            <div className="mb-2 flex flex-col gap-1">
-                              <div className="flex flex-wrap items-start justify-between gap-2">
-                                <h3 className="text-sm font-semibold leading-snug text-white">{title}</h3>
-                                <a
-                                  href={viewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                                >
-                                  Buka Penuh
-                                </a>
-                              </div>
-                              <p className="text-[11px] leading-relaxed text-slate-500">{blurb}</p>
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                              <iframe
-                                loading="lazy"
-                                title={title}
-                                src={driveGoogleFilePreviewUrl(viewUrl)}
-                                width="100%"
-                                style={{ border: 0, background: "#0b1220" }}
-                                className="h-[min(38vh,280px)] w-full sm:h-[min(44vh,320px)]"
-                                allowFullScreen
-                              />
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-400/35 bg-sky-500/10 text-sky-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-105"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Bahan pdp digital</p>
-                        <p className="text-xs text-slate-400">
-                          TikTok, YouTube USTP Manjung & Ruang Ilmu DELIMa — pratontak
-                          skrin (klik kad untuk buka)
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {BAHAN_PDP_DIGITAL_CARDS.map(
-                          ({
-                            key,
-                            href,
-                            platform,
-                            title,
-                            subtitle,
-                            cta,
-                            previewSrc,
-                            previewAlt,
-                            ringClass,
-                            badgeClass,
-                          }) => (
-                            <a
-                              key={key}
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`group/card flex flex-col overflow-hidden rounded-xl border bg-slate-900/50 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,229,255,0.12)] ${ringClass}`}
-                            >
-                              <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
-                                <img
-                                  src={previewSrc}
-                                  alt={previewAlt}
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="h-full w-full object-cover object-top transition duration-300 group-hover/card:scale-[1.02]"
-                                />
-                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                                <span
-                                  className={`absolute left-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeClass}`}
-                                >
-                                  {platform}
-                                </span>
-                              </div>
-                              <div className="flex flex-1 flex-col gap-1 p-3.5">
-                                <h3 className="text-sm font-semibold text-white">{title}</h3>
-                                <p className="text-[11px] leading-relaxed text-slate-400">{subtitle}</p>
-                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-cyan-300 group-hover/card:text-cyan-200">
-                                  {cta}
-                                  <span aria-hidden>→</span>
-                                </span>
-                              </div>
-                            </a>
-                          ),
-                        )}
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details name="osc-sub-bahan" className="group mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10 text-emerald-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-105"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Penyebaran dasar</p>
-                        <p className="text-xs text-slate-400">
-                          MJ3PD 2025 · JKPA 2026 · JKPA 2025 · JKPA 2024 (Canva) · contoh KPM
-                          (hebahan COE) · pameran (Hari Guru 2025, R.E.A.Digital, Townhall Ipoh
-                          2025 — PDF Drive)
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        {PENYEBARAN_DASAR_CANVA_CARDS.map(({ key, title, blurb, viewUrl }) => (
-                          <article
-                            key={key}
-                            className="flex min-h-[320px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                          >
-                            <div className="mb-2 flex flex-col gap-1">
-                              <div className="flex flex-wrap items-start justify-between gap-2">
-                                <h3 className="text-sm font-semibold leading-snug text-white">{title}</h3>
-                                <a
-                                  href={viewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                                >
-                                  Buka Penuh
-                                </a>
-                              </div>
-                              <p className="text-[11px] leading-relaxed text-slate-500">{blurb}</p>
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                              <iframe
-                                loading="lazy"
-                                title={title}
-                                src={canvaViewEmbedUrl(viewUrl)}
-                                width="100%"
-                                style={{ border: 0, background: "#0b1220" }}
-                                className="h-[min(38vh,280px)] w-full sm:h-[min(44vh,320px)]"
-                                allowFullScreen
-                                allow="fullscreen"
-                              />
-                            </div>
-                          </article>
-                        ))}
-                        {PENYEBARAN_DASAR_DRIVE_PDF_CARDS.map(({ key, title, blurb, viewUrl }) => (
-                          <article
-                            key={key}
-                            className="flex min-h-[320px] flex-col rounded-xl border border-cyan-400/20 bg-slate-900/40 p-3 backdrop-blur-xl"
-                          >
-                            <div className="mb-2 flex flex-col gap-1">
-                              <div className="flex flex-wrap items-start justify-between gap-2">
-                                <h3 className="text-sm font-semibold leading-snug text-white">
-                                  {title}
-                                </h3>
-                                <a
-                                  href={viewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-2.5 py-1 text-[11px] font-semibold text-slate-950"
-                                >
-                                  Buka Penuh
-                                </a>
-                              </div>
-                              <p className="text-[11px] leading-relaxed text-slate-500">{blurb}</p>
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-cyan-400/15">
-                              <iframe
-                                loading="lazy"
-                                title={title}
-                                src={driveGoogleFilePreviewUrl(viewUrl)}
-                                width="100%"
-                                style={{ border: 0, background: "#0b1220" }}
-                                className="h-[min(38vh,280px)] w-full sm:h-[min(44vh,320px)]"
-                                allowFullScreen
-                              />
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <details name="osc-sub-bahan" className="group rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-950/55 via-slate-950/35 to-slate-900/25 shadow-[0_0_24px_rgba(0,229,255,0.06)] transition-[border-color,box-shadow] duration-200 open:border-cyan-400/40 open:shadow-[0_0_32px_rgba(0,229,255,0.12)]">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/35 bg-indigo-500/10 text-indigo-200">
-                        <svg
-                          className="h-4 w-4 transition-transform duration-200 ease-out group-open:scale-105"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">Contoh Bahan Delima</p>
-                        <p className="text-xs text-slate-400">
-                          Jadual penggunaan DELIMA / DELIMa, contoh GC, OPR — PDF sekolah rujukan
-                        </p>
-                      </div>
-                    </summary>
-                    <div className="overflow-hidden rounded-b-2xl border-t border-cyan-400/10 bg-slate-950/30 px-4 py-4">
-                      <OscSheetCardGrid
-                        key="contoh-bahan-delima"
-                        section="contoh-bahan-delima"
-                        fallbackCards={CONTOH_BAHAN_DELIMA_FALLBACK}
-                      />
-                      <DetailsCollapseFooter />
-                    </div>
-                  </details>
-
-                  <DetailsCollapseFooter />
-                </div>
-              </details>
             </section>
 
         {selectedPegawai && (
@@ -5456,9 +4362,11 @@ export default function App() {
                       <p className="truncate text-sm text-slate-300">{selectedPegawai.jawatan}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {selectedPegawai.detailUrl ? (
+                      {selectedPegawai.detailUrl || selectedPegawai.detailImage ? (
                         <a
-                          href={selectedPegawai.detailUrl}
+                          href={
+                            selectedPegawai.detailUrl || selectedPegawai.detailImage
+                          }
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 px-3 py-1.5 text-xs font-semibold text-slate-950"
@@ -5477,25 +4385,7 @@ export default function App() {
                   </div>
 
                   <div className="relative">
-                    {selectedPegawai.detailUrl ? (
-                      <iframe
-                        title={`${selectedPegawai.nama} - personal profile`}
-                        src={selectedPegawai.detailUrl}
-                        className="h-[70vh] w-full"
-                        style={{ border: 0, background: "#0b1220" }}
-                        allowFullScreen
-                      />
-                    ) : selectedPegawai.detailImage ? (
-                      <img
-                        alt={`${selectedPegawai.nama} - personal profile`}
-                        src={selectedPegawai.detailImage}
-                        className="h-auto w-full"
-                      />
-                    ) : (
-                      <div className="flex h-[70vh] items-center justify-center p-6 text-center text-sm text-slate-300">
-                        Belum diset: beri saya pautan embed atau gambar untuk {selectedPegawai.nama}
-                      </div>
-                    )}
+                    <PegawaiProfilePreview pegawai={selectedPegawai} />
                   </div>
 
                   <div className="border-t border-cyan-400/10 bg-slate-950/40 p-4">
@@ -5531,7 +4421,7 @@ export default function App() {
                 <div className="p-4">
                   <img
                     alt="Status DCS Tahap 3 (ke atas) infografik"
-                    src="/assets/status-dcs.png"
+                    src={dcsAn?.imageUrl || "/assets/status-dcs.png"}
                     className="w-full h-auto rounded-xl border border-cyan-400/10 bg-black/20"
                   />
                 </div>
@@ -5565,7 +4455,7 @@ export default function App() {
                 <div className="p-4">
                   <img
                     alt="Analisis pensijilan digital: jenis sekolah, lokasi dan pensijilan Google, Apple, Microsoft"
-                    src={PENSIJILAN_DIGITAL_IMAGE}
+                    src={pensijilanAn?.imageUrl || PENSIJILAN_DIGITAL_IMAGE}
                     className="w-full h-auto rounded-xl border border-cyan-400/10 bg-black/20"
                   />
                 </div>
@@ -5573,371 +4463,6 @@ export default function App() {
             </div>
           )}
 
-          {programModalOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-900/85 backdrop-blur-xl">
-                <div className="flex items-center justify-between gap-3 border-b border-cyan-400/10 bg-slate-950/40 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-lg font-semibold text-white">
-                      Program Ains - Senarai Pelajar
-                    </p>
-                    <p className="truncate text-sm text-slate-300">
-                      Penapisan: jenis sekolah & status (tanpa email)
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setProgramModalOpen(false)}
-                    className="rounded-lg border border-cyan-400/20 bg-slate-950/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:border-cyan-300/50"
-                  >
-                    Tutup
-                  </button>
-                </div>
-
-                <div className="p-4">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <input
-                      value={programSearch}
-                      onChange={(e) => setProgramSearch(e.target.value)}
-                      placeholder="Cari nama / sekolah / kod..."
-                      className="w-full rounded-lg border border-cyan-300/30 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-300 sm:col-span-1"
-                    />
-
-                    <select
-                      value={programModalType}
-                      onChange={(e) => setProgramModalType(e.target.value)}
-                      className="w-full rounded-lg border border-cyan-300/30 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-300"
-                    >
-                      <option value="ALL">Semua Jenis</option>
-                      <option value="SK">SK</option>
-                      <option value="SJKC">SJKC</option>
-                      <option value="SJKT">SJKT</option>
-                    </select>
-
-                    <select
-                      value={programModalStatus}
-                      onChange={(e) => setProgramModalStatus(e.target.value)}
-                      className="w-full rounded-lg border border-cyan-300/30 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-300"
-                    >
-                      <option value="ALL">Semua Status</option>
-                      <option value="APPROVED">Approved &gt; 0</option>
-                      <option value="REJECTED">Rejected &gt; 0</option>
-                    </select>
-                  </div>
-
-                  <div className="mt-3 text-xs text-slate-400">
-                    Jumlah rekod ditunjukkan:{" "}
-                    <span className="text-cyan-200">{programModalRows.length}</span>
-                  </div>
-                </div>
-
-                <div className="max-h-[55vh] overflow-auto border-t border-cyan-400/10">
-                  {programLoading ? (
-                    <div className="p-4 text-sm text-slate-300">
-                      Memuatkan data...
-                    </div>
-                  ) : programError ? (
-                    <div className="p-4 text-sm text-rose-200">
-                      {programError}
-                    </div>
-                  ) : programModalRows.length === 0 ? (
-                    <div className="p-4 text-sm text-slate-300">
-                      Tiada data untuk penapisan ini.
-                    </div>
-                  ) : (
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="sticky top-0 bg-slate-950/60">
-                        <tr className="text-xs text-slate-400">
-                          <th className="px-3 py-2">Nama</th>
-                          <th className="px-3 py-2">Sekolah</th>
-                          <th className="px-3 py-2">Kod</th>
-                          <th className="px-3 py-2">Approved</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {programModalRows.slice(0, 600).map((r) => (
-                          <tr
-                            key={`${r.code}-${r.name}`}
-                            className="border-t border-cyan-400/10 hover:bg-white/5"
-                          >
-                            <td className="px-3 py-2 align-top">
-                              <div className="break-words font-medium text-white">
-                                {shortenText(r.name, 28)}
-                              </div>
-                              <div className="mt-1 break-words text-xs text-slate-300">
-                                {r.schoolLevel} / {r.schoolType}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <div className="break-words text-slate-200">
-                                {shortenText(r.school, 26)}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 align-top text-slate-200">
-                              {r.code}
-                            </td>
-                            <td className="px-3 py-2 align-top text-slate-200">
-                              {r.approved}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {delimaModalOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden overflow-y-auto rounded-2xl border border-cyan-400/20 bg-slate-900/85 backdrop-blur-xl">
-                <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-cyan-400/10 bg-slate-950/90 p-4 backdrop-blur-md">
-                  <div className="min-w-0">
-                    <p className="text-lg font-semibold text-white">
-                      DELIMa — Paparan penuh (Manjung)
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      Sumber:{" "}
-                      <span className="text-slate-300">delima-ppd-manjung.xlsx</span>
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <a
-                      href={DELIMA_GOOGLE_SHEET_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-lg border border-cyan-400/30 bg-slate-950/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:border-cyan-300/50"
-                    >
-                      Buka Sheet
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setDelimaModalOpen(false)}
-                      className="rounded-lg border border-cyan-400/20 bg-slate-950/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:border-cyan-300/50"
-                    >
-                      Tutup
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4 p-4">
-                  {!delimaLoading && !delimaError && delimaRows.length > 0 ? (
-                    <>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-xl border border-cyan-400/15 bg-slate-950/35 p-3 text-sm">
-                          <p className="text-xs text-slate-500">Kunjungan khidmat / bengkel</p>
-                          <p className="mt-1 text-lg font-semibold text-white">
-                            {delimaInsight.bantuSessionsTotal}{" "}
-                            <span className="text-sm font-normal text-slate-400">kali</span>
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {delimaInsight.bantuSchoolsWithRekod} sekolah ada rekod
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-cyan-400/15 bg-slate-950/35 p-3 text-sm">
-                          <p className="text-xs text-slate-500">
-                            Perbandingan purata daerah (TOV → Dis)
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                            <span className="text-slate-300">
-                              Guru{" "}
-                              <DelimaDeltaPp
-                                before={delimaInsight.avgTovGuru}
-                                after={delimaInsight.avgDisGuru}
-                                title="Guru"
-                              />
-                            </span>
-                            <span className="text-slate-300">
-                              Murid{" "}
-                              <DelimaDeltaPp
-                                before={delimaInsight.avgTovMurid}
-                                after={delimaInsight.avgDisMurid}
-                                title="Murid"
-                              />
-                            </span>
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-cyan-400/15 bg-slate-950/35 p-3 text-sm sm:col-span-2 lg:col-span-1">
-                          <p className="text-xs text-slate-500">
-                            Sasaran purata Disember (guru {DELIMA_KPI_GURU_PCT}% · murid{" "}
-                            {DELIMA_KPI_MURID_PCT}%)
-                          </p>
-                          <p className="mt-1 text-slate-200">
-                            Guru:{" "}
-                            <span
-                              className={
-                                delimaInsight.kpiGuruOk
-                                  ? "font-semibold text-emerald-300"
-                                  : "font-semibold text-amber-200"
-                              }
-                            >
-                              {delimaInsight.kpiGuruOk ? "Capai" : "Belum capai"}
-                            </span>
-                            {" · "}
-                            Murid:{" "}
-                            <span
-                              className={
-                                delimaInsight.kpiMuridOk
-                                  ? "font-semibold text-emerald-300"
-                                  : "font-semibold text-amber-200"
-                              }
-                            >
-                              {delimaInsight.kpiMuridOk ? "Capai" : "Belum capai"}
-                            </span>
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Dis ≥ TOV: G {delimaInsight.schoolsGuruGteTov}/
-                            {delimaInsight.schools} · M {delimaInsight.schoolsMuridGteTov}/
-                            {delimaInsight.schools}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-cyan-400/15 bg-slate-950/25 p-3">
-                        <p className="mb-2 text-xs font-medium text-slate-400">
-                          Purata daerah — % aktif guru &amp; murid mengikut potongan masa
-                        </p>
-                        <DelimaTrendChart series={delimaInsight.seriesDisplay} height={240} />
-                        <div className="mt-3 border-t border-cyan-400/10 pt-3">
-                          <DelimaMonthAvgTable
-                            seriesDisplay={delimaInsight.seriesDisplay}
-                            maxHeightClass="max-h-[220px]"
-                            showCaption={false}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  ) : null}
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-slate-300">
-                      Jadual data per sekolah
-                    </p>
-                    <input
-                      value={delimaSearch}
-                      onChange={(e) => setDelimaSearch(e.target.value)}
-                      placeholder="Cari kod / nama sekolah..."
-                      className="w-full rounded-lg border border-cyan-300/30 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-300"
-                    />
-                    <div className="mt-2 text-xs text-slate-400">
-                      Jumlah baris:{" "}
-                      <span className="text-cyan-200">{filteredDelimaRows.length}</span>
-                      {filteredDelimaRows.length > 600 ? (
-                        <span className="text-slate-500"> (paparan pertama 600)</span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="max-h-[min(50vh,480px)] overflow-auto border-t border-cyan-400/10 px-4 pb-4">
-                  {delimaLoading ? (
-                    <div className="p-4 text-sm text-slate-300">Memuatkan data...</div>
-                  ) : delimaError ? (
-                    <div className="p-4 text-sm text-rose-200">{delimaError}</div>
-                  ) : filteredDelimaRows.length === 0 ? (
-                    <div className="p-4 text-sm text-slate-300">Tiada rekod sepadan.</div>
-                  ) : (
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="sticky top-0 bg-slate-950/95">
-                        <tr className="text-xs text-slate-400">
-                          <th className="px-2 py-2">Kod</th>
-                          <th className="px-2 py-2">Sekolah</th>
-                          <th className="px-2 py-2">Bantu (kali)</th>
-                          <th className="px-2 py-2">TOV G</th>
-                          <th className="px-2 py-2">TOV M</th>
-                          <th className="px-2 py-2">Nov G</th>
-                          <th className="px-2 py-2">Nov M</th>
-                          <th className="px-2 py-2">Dis G</th>
-                          <th className="px-2 py-2">Dis M</th>
-                          <th className="px-2 py-2">Guru</th>
-                          <th className="px-2 py-2">Dash</th>
-                          <th className="px-2 py-2">Aktif</th>
-                          <th className="px-2 py-2">%</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredDelimaRows.slice(0, 600).map((r, idx) => (
-                          <tr
-                            key={`${r.kod}-${idx}`}
-                            className="border-t border-cyan-400/10 hover:bg-white/5"
-                          >
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {r.kod}
-                            </td>
-                            <td className="max-w-[180px] px-2 py-2 align-top text-slate-200">
-                              <span className="break-words">{shortenText(r.nama, 36)}</span>
-                            </td>
-                            <td
-                              className="max-w-[120px] px-2 py-2 align-top text-xs text-slate-300"
-                              title={r.tarikhBantu || ""}
-                            >
-                              {r.bantuKali > 0 ? (
-                                <>
-                                  <span className="font-semibold tabular-nums text-cyan-200">
-                                    {r.bantuKali}×
-                                  </span>
-                                  {r.tarikhBantu ? (
-                                    <span className="mt-0.5 block break-words text-[10px] leading-snug text-slate-500">
-                                      {shortenText(r.tarikhBantu, 22)}
-                                    </span>
-                                  ) : null}
-                                </>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.tovGuru)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.tovMurid)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.novGuru)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.novMurid)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.disGuru)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.disMurid)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {r.bilGuru == null ? "—" : String(Math.round(r.bilGuru))}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {r.bilDashboard == null
-                                ? "—"
-                                : String(Math.round(r.bilDashboard))}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {r.bilGuruAktif == null
-                                ? "—"
-                                : String(Math.round(r.bilGuruAktif))}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2 align-top text-slate-200">
-                              {fmtPct1(r.aktivitiPct)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            </div>
-        )}
       </div>
     </main>
   );

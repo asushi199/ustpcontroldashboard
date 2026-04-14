@@ -1,0 +1,112 @@
+﻿function AiToolsDelimaSummary({ sheet } = {}) {
+  const k = sheet
+    ? {
+        asAt: sheet.asAt,
+        selesaiPct: sheet.selesaiPct,
+        selesaiBil: sheet.selesaiBil,
+        belumPct: sheet.belumPct,
+        belumBil: sheet.belumBil,
+      }
+    : AI_TOOLS_SNAPSHOT_OPTIK;
+  const p = sheet
+    ? {
+        tov2024: sheet.tov2024,
+        ar1Julai: sheet.ar1Julai,
+        ar2Okt: sheet.ar2Okt,
+      }
+    : AI_TOOLS_PERGERAKAN;
+  const line = sheet ? sheet.kpiKebangsaan : AI_TOOLS_KPI_KEBANGSAAN;
+
+  const footerText =
+    sheet?.footerNote ||
+    `AR2 (Okt) melebihi sasaran ${line}% berbanding AR1; titik akhir ialah peratus selesai snapshot ${k.asAt} (bukan skala sama dengan TOV/AR).`;
+
+  return (
+    <div className="mt-3 flex flex-1 flex-col space-y-4 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-400/15 bg-slate-950/40 p-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/35 bg-amber-500/10 text-amber-200"
+          title="Sasaran kebangsaan"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Garisan KPI kebangsaan
+          </p>
+          <p className="text-lg font-bold tabular-nums text-amber-100">{line.toFixed(2)}%</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/12 px-2.5 py-1 text-[11px] font-medium text-emerald-200">
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Melebihi garisan (snapshot daerah)
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-cyan-400/15 bg-slate-950/35 p-3">
+        <p className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          <svg className="h-3.5 w-3.5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Aktif / selesai — setakat {k.asAt}
+        </p>
+        <svg viewBox="0 0 100 26" className="h-14 w-full" preserveAspectRatio="none" aria-hidden>
+          <rect x="0" y="6" width={k.selesaiPct} height="14" rx="1" fill="rgba(52,211,153,0.55)" />
+          <rect x={k.selesaiPct} y="6" width={k.belumPct} height="14" rx="1" fill="rgba(251,113,133,0.45)" />
+          <line
+            x1={line}
+            y1="2"
+            x2={line}
+            y2="24"
+            stroke="#fcd34d"
+            strokeWidth="0.9"
+            strokeDasharray="2.2 2.2"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-2 py-1 tabular-nums text-emerald-100">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Selesai {k.selesaiPct}% ({k.selesaiBil.toLocaleString("en-MY")})
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-lg border border-rose-400/25 bg-rose-500/10 px-2 py-1 tabular-nums text-rose-100">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Belum {k.belumPct}% ({k.belumBil.toLocaleString("en-MY")})
+          </span>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-cyan-400/15 bg-slate-950/40 p-3">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          Pergerakan & snapshot (TOV → AR → selesai)
+        </p>
+        <AiToolsOptikAreaChart snapshot={k} pergerakan={p} kpiPct={line} />
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block h-0 w-8 border-t-2 border-dashed border-amber-300/90"
+              aria-hidden
+            />
+            Garisan sasaran kebangsaan
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block h-0.5 w-8 rounded-full bg-cyan-400"
+              aria-hidden
+            />
+            Trend capaian
+          </span>
+        </div>
+        <p className="mt-2 text-[10px] leading-relaxed text-slate-500">{footerText}</p>
+      </div>
+    </div>
+  );
+}
