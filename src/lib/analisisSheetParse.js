@@ -5,6 +5,21 @@ function num(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Cantum lajur nilai selepas lajur kunci. Buang lajur kosong di hujung dulu
+ * supaya jadual berbilang lajur (cth ada lajur C/D kosong) tidak hasilkan koma
+ * berganda di hujung nilai (cth "Buka sumber,,").
+ * @param {string[]} row
+ * @returns {string}
+ */
+function joinValueCells(row) {
+  const cells = row.slice(1);
+  while (cells.length && String(cells[cells.length - 1] ?? "").trim() === "") {
+    cells.pop();
+  }
+  return cells.join(",").trim();
+}
+
 export function parseKeyValueCsv(csvText) {
   const m = parseCsvMatrix(csvText);
   const out = {};
@@ -13,7 +28,7 @@ export function parseKeyValueCsv(csvText) {
     if (!row?.length) continue;
     const k = String(row[0] ?? "").trim();
     if (!k || k.toLowerCase() === "key") continue;
-    const v = row.slice(1).join(",").trim();
+    const v = joinValueCells(row);
     if (v) out[k] = v;
   }
   return out;
@@ -339,7 +354,7 @@ export function parsePensijilanAnalisisCsv(csvText) {
     if (c0 === "key" && String(row[1] ?? "").toLowerCase() === "value") continue;
     if (row.length >= 2) {
       const k = String(row[0] ?? "").trim();
-      const v = row.slice(1).join(",").trim();
+      const v = joinValueCells(row);
       if (k && v) meta[k] = v;
     }
   }
