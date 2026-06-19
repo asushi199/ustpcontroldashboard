@@ -66,34 +66,29 @@ export function parseMaklumatAsasCsv(csvText) {
     else if (h === "detail_image") col.detailImage = c;
   }
 
+  // Sub-tajuk jadual pegawai selalunya hanya label "nama,jawatan" dan biar lajur
+  // lain kosong. Guna kedudukan tetap dari blok config
+  // (key,value,telefon,detail_url,detail_image) sebagai sandaran supaya telefon
+  // & detail_image tetap dibaca walaupun sel tajuknya kosong.
+  if (col.nama === undefined) col.nama = 0;
+  if (col.jawatan === undefined) col.jawatan = 1;
+  if (col.telefon === undefined) col.telefon = 2;
+  if (col.detailUrl === undefined) col.detailUrl = 3;
+  if (col.detailImage === undefined) col.detailImage = 4;
+
   const pegawaiRows = [];
   for (let i = pegawaiHeaderIdx + 1; i < matrix.length; i++) {
     const row = matrix[i];
     if (!row?.length) continue;
-    const nama =
-      col.nama !== undefined
-        ? String(row[col.nama] ?? "").trim()
-        : String(row[0] ?? "").trim();
-    const jawatan =
-      col.jawatan !== undefined
-        ? String(row[col.jawatan] ?? "").trim()
-        : String(row[1] ?? "").trim();
+    const nama = String(row[col.nama] ?? "").trim();
+    const jawatan = String(row[col.jawatan] ?? "").trim();
     if (!nama && !jawatan) continue;
     pegawaiRows.push({
       nama: nama || "—",
       jawatan,
-      telefon:
-        col.telefon !== undefined
-          ? String(row[col.telefon] ?? "").trim()
-          : "",
-      detailUrl:
-        col.detailUrl !== undefined
-          ? String(row[col.detailUrl] ?? "").trim()
-          : "",
-      detailImage:
-        col.detailImage !== undefined
-          ? String(row[col.detailImage] ?? "").trim()
-          : "",
+      telefon: String(row[col.telefon] ?? "").trim(),
+      detailUrl: String(row[col.detailUrl] ?? "").trim(),
+      detailImage: String(row[col.detailImage] ?? "").trim(),
     });
   }
 

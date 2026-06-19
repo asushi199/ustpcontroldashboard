@@ -6,6 +6,7 @@ import { OscTopicSheetBody } from "./components/OscTopicSheetBody.jsx";
 import {
   canvaViewEmbedUrl,
   driveGoogleFilePreviewUrl,
+  driveGoogleImageUrl,
   googleDocEmbedPreviewUrl,
   maklumatAsasPreviewMode,
 } from "./lib/embedUrls.js";
@@ -47,7 +48,7 @@ const DELIMA_GOOGLE_SHEET_URL =
 /** Paparan pill sasaran guru/murid DELIMa — matikan kerana garis panduan KPM semasa. Tukar kepada true untuk papar semula. */
 const DELIMA_SHOW_SASARAN_KPI = false;
 
-/** Modal pegawai: `detailImage` boleh URL Drive (iframe) atau imej terus — sama logik dengan Carta/PKG. */
+/** Modal pegawai: `detailImage` boleh pautan Drive (imej terus) atau imej terus — papar sebagai `<img>` bersih. */
 function PegawaiProfilePreview({ pegawai }) {
   if (pegawai.detailUrl) {
     return (
@@ -61,6 +62,17 @@ function PegawaiProfilePreview({ pegawai }) {
     );
   }
   if (pegawai.detailImage) {
+    // Gambar pegawai sememangnya imej: pautan Drive → URL imej terus (lh3), bukan bingkai Drive.
+    const isDrive = /drive\.google\.com/i.test(pegawai.detailImage);
+    if (isDrive) {
+      return (
+        <img
+          alt={`${pegawai.nama} - personal profile`}
+          src={driveGoogleImageUrl(pegawai.detailImage)}
+          className="h-auto w-full"
+        />
+      );
+    }
     const prev = maklumatAsasPreviewMode(pegawai.detailImage);
     if (prev.kind === "iframe") {
       return (
@@ -4355,8 +4367,8 @@ export default function App() {
                 role="dialog"
                 aria-modal="true"
               >
-                <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-900/85 backdrop-blur-xl">
-                  <div className="flex items-center justify-between gap-3 border-b border-cyan-400/10 bg-slate-950/40 p-4">
+                <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-900/85 backdrop-blur-xl">
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-cyan-400/10 bg-slate-950/40 p-4">
                     <div className="min-w-0">
                       <p className="truncate text-lg font-semibold text-white">{selectedPegawai.nama}</p>
                       <p className="truncate text-sm text-slate-300">{selectedPegawai.jawatan}</p>
@@ -4384,11 +4396,11 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative flex-1 overflow-auto">
                     <PegawaiProfilePreview pegawai={selectedPegawai} />
                   </div>
 
-                  <div className="border-t border-cyan-400/10 bg-slate-950/40 p-4">
+                  <div className="shrink-0 border-t border-cyan-400/10 bg-slate-950/40 p-4">
                     <p className="text-sm text-slate-300">
                       Telefon: <span className="text-cyan-200">{selectedPegawai.telefon}</span>
                     </p>

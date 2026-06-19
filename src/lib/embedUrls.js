@@ -49,6 +49,23 @@ export function driveGoogleFilePreviewUrl(viewUrl) {
   return s;
 }
 
+/**
+ * Google Drive — pautan kongsi fail → URL imej terus (lh3) untuk dipapar sebagai `<img>`.
+ * Untuk gambar pegawai yang sememangnya imej, supaya papar bersih tanpa bingkai Drive.
+ * Pulangkan URL asal jika bukan pautan Drive / gagal cari ID.
+ * @param {string} url
+ * @returns {string}
+ */
+export function driveGoogleImageUrl(url) {
+  const s = String(url ?? "").trim();
+  if (!/drive\.google\.com/i.test(s)) return s;
+  const fileD = s.match(/\/file\/d\/([^/?]+)/);
+  if (fileD) return `https://lh3.googleusercontent.com/d/${fileD[1]}`;
+  const idParam = s.match(/[?&]id=([^&]+)/);
+  if (idParam) return `https://lh3.googleusercontent.com/d/${idParam[1]}`;
+  return s;
+}
+
 /** Google Docs — `/preview` untuk iframe */
 export function googleDocEmbedPreviewUrl(docUrl) {
   const m = docUrl.match(/\/document\/d\/([^/?]+)/);
