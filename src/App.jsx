@@ -4433,7 +4433,7 @@ export default function App() {
                 <div className="p-4">
                   <img
                     alt="Status DCS Tahap 3 (ke atas) infografik"
-                    src={dcsAn?.imageUrl || "/assets/status-dcs.png"}
+                    src={driveGoogleImageUrl(dcsAn?.imageUrl || "/assets/status-dcs.png")}
                     className="w-full h-auto rounded-xl border border-cyan-400/10 bg-black/20"
                   />
                 </div>
@@ -4467,7 +4467,7 @@ export default function App() {
                 <div className="p-4">
                   <img
                     alt="Analisis pensijilan digital: jenis sekolah, lokasi dan pensijilan Google, Apple, Microsoft"
-                    src={pensijilanAn?.imageUrl || PENSIJILAN_DIGITAL_IMAGE}
+                    src={driveGoogleImageUrl(pensijilanAn?.imageUrl || PENSIJILAN_DIGITAL_IMAGE)}
                     className="w-full h-auto rounded-xl border border-cyan-400/10 bg-black/20"
                   />
                 </div>
